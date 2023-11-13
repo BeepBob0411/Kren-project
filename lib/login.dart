@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kren/signup.dart';
-import 'package:kren/screen/weather/weather_screen.dart'; // Import the WeatherScreen
+import 'package:kren/screen/weather/weather_screen.dart';
+
+// Import the WeatherScreen
 
 class LoginPage extends StatefulWidget {
   @override

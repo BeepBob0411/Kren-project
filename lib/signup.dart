@@ -57,8 +57,12 @@ class _SignupPageState extends State<SignupPage> {
           'https://emsifa.github.io/api-wilayah-indonesia/api/regencies/$provinceId.json'));
 
       if (response.statusCode == 200) {
-        final List<String> regenciesData =
-            List<String>.from(json.decode(response.body));
+        final List<String> regenciesData = List<String>.from(
+          (json.decode(response.body) as List<dynamic>).map((regency) {
+            return regency["name"]
+                .toString(); // Modify here to get only the name
+          }),
+        );
 
         setState(() {
           _regencies = regenciesData;
@@ -109,6 +113,8 @@ class _SignupPageState extends State<SignupPage> {
               _selectedProvinceId = _provinces.firstWhere(
                   (province) => province["name"] == _selectedProvince)["id"];
               _fetchRegencies(_selectedProvinceId);
+              _selectedRegency =
+                  ""; // Reset selected regency when province changes
             });
           },
         ),
@@ -118,6 +124,9 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   Widget regencyDropdown() {
+    // Add an empty regency to the list
+    List<String> regenciesWithEmpty = [""]..addAll(_regencies);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -132,8 +141,8 @@ class _SignupPageState extends State<SignupPage> {
         SizedBox(height: 5),
         DropdownButton<String>(
           isExpanded: true,
-          value: _selectedRegency,
-          items: _regencies.map((regency) {
+          value: _selectedRegency.isNotEmpty ? _selectedRegency : null,
+          items: regenciesWithEmpty.map((regency) {
             return DropdownMenuItem<String>(
               value: regency,
               child: Text(regency),
@@ -141,7 +150,7 @@ class _SignupPageState extends State<SignupPage> {
           }).toList(),
           onChanged: (String? value) {
             setState(() {
-              _selectedRegency = value!;
+              _selectedRegency = value ?? "";
             });
           },
         ),
@@ -248,7 +257,7 @@ class _SignupPageState extends State<SignupPage> {
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 Column(
                   children: <Widget>[
@@ -268,9 +277,10 @@ class _SignupPageState extends State<SignupPage> {
                     )
                   ],
                 ),
+                SizedBox(height: 20),
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  child: ListView(
+                    shrinkWrap: true,
                     children: <Widget>[
                       inputFile(
                         label: 'Username',
@@ -303,6 +313,7 @@ class _SignupPageState extends State<SignupPage> {
                     ],
                   ),
                 ),
+                SizedBox(height: 20),
                 Container(
                   padding: EdgeInsets.only(),
                   decoration: BoxDecoration(),
