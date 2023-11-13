@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kren/constants/constants.dart';
 import 'package:kren/screen/onboarding/screen_two.dart';
-import 'components/slanding_clipper.dart';
+import 'components/curved_clipper.dart'; // Import the curved clipper
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OnboardingScreenOne extends StatelessWidget {
@@ -28,7 +28,7 @@ class OnboardingScreenOne extends StatelessWidget {
                   image: AssetImage('assets/images/welcome2.png'),
                 ),
                 ClipPath(
-                  clipper: SlandingClipper(),
+                  clipper: CurvedClipper(), // Use the CurvedClipper
                   child: Container(
                     height: size.height * 0.4,
                     color: yellow,

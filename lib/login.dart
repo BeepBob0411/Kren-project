@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kren/signup.dart';
+import 'package:kren/screen/weather/weather_screen.dart'; // Import the WeatherScreen
 
 class LoginPage extends StatefulWidget {
   @override
@@ -98,6 +99,14 @@ class _LoginPageState extends State<LoginPage> {
 
                           if (_emailError.isEmpty && _passwordError.isEmpty) {
                             // Continue with your login logic
+
+                            // Navigate to WeatherScreen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WeatherScreen(),
+                              ),
+                            );
                           }
                         },
                         color: Color(0xff0095FF),
