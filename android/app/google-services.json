@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "445672177098",
+    "project_id": "resqube-c1962",
+    "storage_bucket": "resqube-c1962.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:445672177098:android:35128b649d5f793d992333",
+        "android_client_info": {
+          "package_name": "com.example.kren"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtcRDfBU8Cu8ixPlXzR1RxnlFECyDShrE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

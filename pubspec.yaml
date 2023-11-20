@@ -69,10 +69,6 @@ flutter:
 
   
   assets:
-    - assets/images/one.jpg
-    - assets/images/two.jpg
-    - assets/images/three.jpg
-    - assets/images/four.jpg
     - assets/images/
 
   #   - images/a_dot_ham.jpeg

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:kren/Home.dart';
 import 'package:kren/signup.dart';
-import 'package:kren/DatabaseHandler/DbHelper.dart';
+
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  DbHelper dbHelper = DbHelper();
-
   TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   String _usernameError = '';
@@ -86,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: MaterialButton(
                         minWidth: double.infinity,
                         height: 60,
-                        onPressed: () async {
+                        onPressed: () {
                           String username = _usernameController.text;
                           String password = _passwordController.text;
 
@@ -99,31 +97,19 @@ class _LoginPageState extends State<LoginPage> {
                             // Add more conditions or validation checks as needed
                           });
 
-                          if (_usernameError.isEmpty && _passwordError.isEmpty) {
+                          if (_usernameError.isEmpty &&
+                              _passwordError.isEmpty) {
                             // Continue with your login logic
-                            final db = await dbHelper.db;
+                            // Simulate login success for demonstration
+                            bool loginSuccess = true;
 
-                            List<Map> result = await db.query(
-                              DbHelper.Table_User,
-                              where:
-                              "${DbHelper.C_Username} = ? AND ${DbHelper.C_Password} = ?",
-                              whereArgs: [username, password],
-                            );
-
-                            if (result.isNotEmpty) {
-                              // Login successful
+                            if (loginSuccess) {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => HomePage(),
                                 ),
                               );
-                            } else {
-                              // Login failed, show error message
-                              setState(() {
-                                _usernameError = "Username atau Password salah";
-                                _passwordError = "Username atau Password salah";
-                              });
                             }
                           }
                         },

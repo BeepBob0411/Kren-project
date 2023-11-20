@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:kren/DatabaseHandler/DbHelper.dart';
 import 'package:kren/login.dart';
-import 'package:sqflite/sqflite.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -26,9 +24,6 @@ class _SignupPageState extends State<SignupPage> {
 
   List<Map<String, dynamic>> _provinces = [];
   List<String> _regencies = [];
-
-  // Initialize the database helper
-  final DbHelper dbHelper = DbHelper();
 
   @override
   void initState() {
@@ -66,7 +61,8 @@ class _SignupPageState extends State<SignupPage> {
   Future<void> _fetchRegencies(String provinceId) async {
     try {
       final response = await http.get(Uri.parse(
-          'https://emsifa.github.io/api-wilayah-indonesia/api/regencies/$provinceId.json'));
+        'https://emsifa.github.io/api-wilayah-indonesia/api/regencies/$provinceId.json',
+      ));
 
       if (response.statusCode == 200) {
         final List<String> regenciesData = List<String>.from(
@@ -86,13 +82,23 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  void signUp(BuildContext context) async {
+  void signUp() {
     // Validation checks
     if (_conUsername.text.isEmpty ||
         _conEmail.text.isEmpty ||
         _conPassword.text.isEmpty ||
-        _conCPassword.text.isEmpty) {
+        _conCPassword.text.isEmpty ||
+        _selectedProvince.isEmpty ||
+        _selectedRegency.isEmpty) {
       // Handle empty fields
+      setState(() {
+        _usernameNotification = _conUsername.text.isEmpty ? "Username is required" : "";
+        _emailNotification = _conEmail.text.isEmpty ? "Email is required" : "";
+        _passwdNotification = _conPassword.text.isEmpty ? "Password is required" : "";
+        _cpasswdNotification = _conCPassword.text.isEmpty ? "Confirm Password is required" : "";
+        _selectedProvince = _selectedProvince.isEmpty ? "Please select a province" : "";
+        _selectedRegency = _selectedRegency.isEmpty ? "Please select a regency" : "";
+      });
       return;
     }
 
@@ -104,65 +110,33 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // Initialize the database
-    Database db = await dbHelper.db;
+    // Simulate registration
+    print('Registration successful!');
+    print('Username: ${_conUsername.text}');
+    print('Email: ${_conEmail.text}');
+    print('Province: $_selectedProvince');
+    print('Regency: $_selectedRegency');
+    // You can add more registration logic here
 
-    // Check if the username is already taken
-    List<Map> result = await db.query(DbHelper.Table_User,
-        where: "${DbHelper.C_Username} = ?", whereArgs: [_conUsername.text]);
-    if (result.isNotEmpty) {
-      setState(() {
-        _usernameNotification = "Username already exists";
-        _emailNotification = ""; // Reset email notification if any
-      });
-      return;
-    }
-
-    // Check if the email is already registered
-    result = await db.query(DbHelper.Table_User,
-        where: "${DbHelper.C_Email} = ?", whereArgs: [_conEmail.text]);
-    if (result.isNotEmpty) {
-      setState(() {
-        _emailNotification = "Email already registered";
-        _usernameNotification = ""; // Reset username notification if any
-      });
-
-      // Display a dialog or snackbar with the notification
-      // You can customize this part based on your UI design
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Account Already Exists"),
-            content: Text("The provided email is already registered."),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
-
-      return;
-    }
-
-    // Insert user data into the database
-    await db.insert(DbHelper.Table_User, {
-      DbHelper.C_Username: _conUsername.text,
-      DbHelper.C_Email: _conEmail.text,
-      DbHelper.C_Password: _conPassword.text,
+    // Reset notifications and fields
+    setState(() {
+      _usernameNotification = "";
+      _emailNotification = "";
+      _passwdNotification = "";
+      _cpasswdNotification = "";
+      _selectedProvince = "";
+      _selectedRegency = "";
     });
 
-    // Navigate to login page or perform any other action after successful signup
+    // Clear text fields
+    _conUsername.clear();
+    _conEmail.clear();
+    _conPassword.clear();
+    _conCPassword.clear();
+
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => LoginPage(),
-      ),
+      MaterialPageRoute(builder: (context) => LoginPage()),
     );
   }
 
@@ -402,7 +376,7 @@ class _SignupPageState extends State<SignupPage> {
                     minWidth: double.infinity,
                     height: 60,
                     onPressed: () {
-                      signUp(context);
+                      signUp();
                     },
                     color: Color(0xff0095FF),
                     shape: RoundedRectangleBorder(
