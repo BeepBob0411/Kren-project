@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:kren/Home.dart';
 import 'package:kren/signup.dart';
-import 'package:kren/screen/weather/weather_screen.dart';
-
-// Import the WeatherScreen
-
+import 'package:kren/DatabaseHandler/DbHelper.dart';
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController _emailController = TextEditingController();
+  DbHelper dbHelper = DbHelper();
+
+  TextEditingController _usernameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-  String _emailError = '';
+  String _usernameError = '';
   String _passwordError = '';
 
   @override
@@ -65,9 +65,9 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       children: <Widget>[
                         inputFile(
-                          label: "Email",
-                          controller: _emailController,
-                          errorText: _emailError,
+                          label: "Username",
+                          controller: _usernameController,
+                          errorText: _usernameError,
                         ),
                         inputFile(
                           label: "Password",
@@ -86,29 +86,45 @@ class _LoginPageState extends State<LoginPage> {
                       child: MaterialButton(
                         minWidth: double.infinity,
                         height: 60,
-                        onPressed: () {
-                          String email = _emailController.text;
+                        onPressed: () async {
+                          String username = _usernameController.text;
                           String password = _passwordController.text;
 
                           setState(() {
-                            _emailError =
-                                email.isEmpty ? "Masukkan Username Anda" : '';
+                            _usernameError =
+                            username.isEmpty ? "Masukkan Username Anda" : '';
                             _passwordError = password.isEmpty
                                 ? "Masukkan Password Anda!"
                                 : '';
                             // Add more conditions or validation checks as needed
                           });
 
-                          if (_emailError.isEmpty && _passwordError.isEmpty) {
+                          if (_usernameError.isEmpty && _passwordError.isEmpty) {
                             // Continue with your login logic
+                            final db = await dbHelper.db;
 
-                            // Navigate to WeatherScreen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WeatherScreen(),
-                              ),
+                            List<Map> result = await db.query(
+                              DbHelper.Table_User,
+                              where:
+                              "${DbHelper.C_Username} = ? AND ${DbHelper.C_Password} = ?",
+                              whereArgs: [username, password],
                             );
+
+                            if (result.isNotEmpty) {
+                              // Login successful
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HomePage(),
+                                ),
+                              );
+                            } else {
+                              // Login failed, show error message
+                              setState(() {
+                                _usernameError = "Username atau Password salah";
+                                _passwordError = "Username atau Password salah";
+                              });
+                            }
                           }
                         },
                         color: Color(0xff0095FF),

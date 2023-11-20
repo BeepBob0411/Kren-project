@@ -1,6 +1,6 @@
+import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 import 'dart:io' as io;
 
 class DbHelper {
@@ -28,15 +28,18 @@ class DbHelper {
 Future<Database> initDb() async {
   io.Directory documentsDirectory = await getApplicationDocumentsDirectory();
   String path = join(documentsDirectory.path, DbHelper.DB_Name);
-  var db =
-      await openDatabase(path, version: DbHelper.Version, onCreate: _onCreate);
+  var db = await openDatabase(path, version: DbHelper.Version, onCreate: _onCreate);
   return db;
 }
 
 void _onCreate(Database db, int version) async {
-  await db.execute("CREATE TABLE ${DbHelper.Table_User} ("
-      "${DbHelper.C_Username} TEXT PRIMARY KEY,"
-      "${DbHelper.C_Email} TEXT,"
-      "${DbHelper.C_Password} TEXT"
-      ")");
+  try {
+    await db.execute("CREATE TABLE ${DbHelper.Table_User} ("
+        "${DbHelper.C_Username} TEXT PRIMARY KEY,"
+        "${DbHelper.C_Email} TEXT,"
+        "${DbHelper.C_Password} TEXT"
+        ")");
+  } catch (e) {
+    print("Error creating table: $e");
+  }
 }

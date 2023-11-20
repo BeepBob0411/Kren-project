@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:kren/DatabaseHandler/DbHelper.dart';
+import 'package:kren/login.dart';
+import 'package:sqflite/sqflite.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -24,6 +27,15 @@ class _SignupPageState extends State<SignupPage> {
   List<Map<String, dynamic>> _provinces = [];
   List<String> _regencies = [];
 
+  // Initialize the database helper
+  final DbHelper dbHelper = DbHelper();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProvinces();
+  }
+
   Future<void> _fetchProvinces() async {
     try {
       final response = await http.get(Uri.parse(
@@ -31,7 +43,7 @@ class _SignupPageState extends State<SignupPage> {
 
       if (response.statusCode == 200) {
         final List<Map<String, dynamic>> provincesData =
-            List<Map<String, dynamic>>.from(
+        List<Map<String, dynamic>>.from(
           (json.decode(response.body) as List<dynamic>).map((province) {
             return {
               "name": province["name"],
@@ -59,8 +71,7 @@ class _SignupPageState extends State<SignupPage> {
       if (response.statusCode == 200) {
         final List<String> regenciesData = List<String>.from(
           (json.decode(response.body) as List<dynamic>).map((regency) {
-            return regency["name"]
-                .toString(); // Modify here to get only the name
+            return regency["name"].toString();
           }),
         );
 
@@ -75,14 +86,84 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchProvinces();
-  }
+  void signUp(BuildContext context) async {
+    // Validation checks
+    if (_conUsername.text.isEmpty ||
+        _conEmail.text.isEmpty ||
+        _conPassword.text.isEmpty ||
+        _conCPassword.text.isEmpty) {
+      // Handle empty fields
+      return;
+    }
 
-  signUp(BuildContext context) {
-    // Add your signup logic here
+    // Check if passwords match
+    if (_conPassword.text != _conCPassword.text) {
+      setState(() {
+        _cpasswdNotification = "Passwords do not match";
+      });
+      return;
+    }
+
+    // Initialize the database
+    Database db = await dbHelper.db;
+
+    // Check if the username is already taken
+    List<Map> result = await db.query(DbHelper.Table_User,
+        where: "${DbHelper.C_Username} = ?", whereArgs: [_conUsername.text]);
+    if (result.isNotEmpty) {
+      setState(() {
+        _usernameNotification = "Username already exists";
+        _emailNotification = ""; // Reset email notification if any
+      });
+      return;
+    }
+
+    // Check if the email is already registered
+    result = await db.query(DbHelper.Table_User,
+        where: "${DbHelper.C_Email} = ?", whereArgs: [_conEmail.text]);
+    if (result.isNotEmpty) {
+      setState(() {
+        _emailNotification = "Email already registered";
+        _usernameNotification = ""; // Reset username notification if any
+      });
+
+      // Display a dialog or snackbar with the notification
+      // You can customize this part based on your UI design
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Account Already Exists"),
+            content: Text("The provided email is already registered."),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
+    // Insert user data into the database
+    await db.insert(DbHelper.Table_User, {
+      DbHelper.C_Username: _conUsername.text,
+      DbHelper.C_Email: _conEmail.text,
+      DbHelper.C_Password: _conPassword.text,
+    });
+
+    // Navigate to login page or perform any other action after successful signup
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginPage(),
+      ),
+    );
   }
 
   Widget provinceDropdown() {
@@ -111,10 +192,10 @@ class _SignupPageState extends State<SignupPage> {
             setState(() {
               _selectedProvince = value ?? "";
               _selectedProvinceId = _provinces.firstWhere(
-                  (province) => province["name"] == _selectedProvince)["id"];
+                      (province) => province["name"] == _selectedProvince)["id"];
               _fetchRegencies(_selectedProvinceId);
               _selectedRegency =
-                  ""; // Reset selected regency when province changes
+              ""; // Reset selected regency when province changes
             });
           },
         ),
@@ -198,21 +279,21 @@ class _SignupPageState extends State<SignupPage> {
             ),
             prefixIcon: icon != null
                 ? Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: icon,
-                  )
+              padding: const EdgeInsets.all(10.0),
+              child: icon,
+            )
                 : null,
             hintText: hintName,
             suffixIcon: isPasswordVisible != null
                 ? IconButton(
-                    onPressed: () {
-                      isPasswordVisible(!obscureText);
-                    },
-                    icon: obscureText
-                        ? Icon(Icons.visibility)
-                        : Icon(Icons.visibility_off),
-                    color: Colors.grey,
-                  )
+              onPressed: () {
+                isPasswordVisible(!obscureText);
+              },
+              icon: obscureText
+                  ? Icon(Icons.visibility)
+                  : Icon(Icons.visibility_off),
+              color: Colors.grey,
+            )
                 : null,
           ),
         ),
