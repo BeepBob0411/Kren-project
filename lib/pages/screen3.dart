@@ -1,7 +1,7 @@
-// screen3.dart Untuk halaman Lapor
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 enum JenisBencana { alam, nonAlam }
 
@@ -13,7 +13,7 @@ extension JenisBencanaExtension on JenisBencana {
       case JenisBencana.nonAlam:
         return 'Non Alam';
       default:
-        return null;
+        throw ArgumentError('Unsupported JenisBencana: $this');
     }
   }
 }
@@ -24,12 +24,12 @@ class LaporkanKejadian extends StatefulWidget {
 }
 
 class _LaporkanKejadianState extends State<LaporkanKejadian> {
-  final _jenisBencanaController = TextEditingController();
   final _namaBencanaController = TextEditingController();
   final _lokasiBencanaController = TextEditingController();
   final _keteranganBencanaController = TextEditingController();
-  File _image;
-  Position _currentPosition;
+  File? _image;
+  Position? _currentPosition;
+  JenisBencana? _selectedJenisBencana;
 
   @override
   void initState() {
@@ -39,12 +39,18 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
   }
 
   void _getCurrentLocation() async {
-    // Mendapatkan lokasi pengguna
-    final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    // Menyimpan lokasi pengguna ke variabel
-    setState(() {
-      _currentPosition = position;
-    });
+    try {
+      // Mendapatkan lokasi pengguna
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      // Menyimpan lokasi pengguna ke variabel
+      setState(() {
+        _currentPosition = position;
+      });
+    } catch (e) {
+      print("Error getting location: $e");
+    }
   }
 
   @override
@@ -59,11 +65,16 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
           children: [
             // Jenis bencana
             DropdownButtonFormField(
-              value: JenisBencana.alam,
-              items: JenisBencana.values.map((e) => DropdownMenuItem(value: e, child: Text(e.name))).toList(),
+              value: _selectedJenisBencana,
+              items: JenisBencana.values
+                  .map((e) => DropdownMenuItem(
+                value: e,
+                child: Text(e.name),
+              ))
+                  .toList(),
               onChanged: (value) {
                 setState(() {
-                  _jenisBencanaController.text = value.name;
+                  _selectedJenisBencana = value as JenisBencana?;
                 });
               },
             ),
@@ -74,7 +85,7 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
                 labelText: "Nama Bencana",
               ),
               validator: (value) {
-                if (value.isEmpty) {
+                if (value == null || value.isEmpty) {
                   return 'Nama Bencana tidak boleh kosong';
                 }
                 return null;
@@ -87,7 +98,7 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
                 labelText: "Lokasi Bencana",
               ),
               validator: (value) {
-                if (value.isEmpty) {
+                if (value == null || value.isEmpty) {
                   return 'Lokasi Bencana tidak boleh kosong';
                 }
                 return null;
@@ -100,7 +111,7 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
                 labelText: "Keterangan Bencana",
               ),
               validator: (value) {
-                if (value.isEmpty) {
+                if (value == null || value.isEmpty) {
                   return 'Keterangan Bencana tidak boleh kosong';
                 }
                 return null;
@@ -117,11 +128,12 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
                     final ImageSource source = ImageSource.camera;
 
                     // Unggah gambar ke server
-                    final image = await ImagePicker.pickImage(source: source);
+                    final XFile? image =
+                    await ImagePicker().pickImage(source: source);
 
                     if (image != null) {
                       setState(() {
-                        _image = image;
+                        _image = File(image.path);
                       });
                     }
                   },
@@ -131,10 +143,10 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
             ),
             _image != null
                 ? Image.file(
-                    _image,
-                    width: 200,
-                    height: 200,
-                  )
+              _image!,
+              width: 200,
+              height: 200,
+            )
                 : Container(),
             // Tombol Lapor
             ElevatedButton(
@@ -144,7 +156,7 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // Warna latar belakang tombol
+                backgroundColor: Colors.blue, // Use backgroundColor instead of primary
               ),
               child: Text(
                 'Lapor',
@@ -160,7 +172,7 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
   }
 
   bool _validateForm() {
-    if (_jenisBencanaController.text.isEmpty ||
+    if (_selectedJenisBencana == null ||
         _namaBencanaController.text.isEmpty ||
         _lokasiBencanaController.text.isEmpty ||
         _keteranganBencanaController.text.isEmpty ||
@@ -180,44 +192,3 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
     print('Data Terkirim!');
   }
 }
-
-class Screen3 extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Screen 3'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('This is Screen 3'),
-            LaporkanKejadian(), // Tambahkan widget LaporkanKejadian
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'My App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: Screen3(),
-    );
-  }
-}
-
-
-
-
