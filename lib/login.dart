@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kren/Home.dart';
 import 'package:kren/signup.dart';
+import 'nav.dart';
 
 class LoginPage extends StatefulWidget {
   @override
