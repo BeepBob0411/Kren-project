@@ -1,184 +1,135 @@
 import 'package:flutter/material.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
+import 'pages/screen1.dart';
+import 'pages/screen2.dart';
+import 'pages/screen3.dart';
+import 'pages/screen4.dart';
+import 'pages/screen5.dart';
+import 'package:kren/screen/onboarding/screen_one.dart';
+import 'package:kren/screen/onboarding/screen_two.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: ThemeData(fontFamily: 'Roboto'),
-  home: HomePage(),
-));
-
-class HomePage extends StatefulWidget {
-  @override
-  _HomePageState createState() => _HomePageState();
+void main() {
+  runApp(const MainApp());
 }
 
-class _HomePageState extends State<HomePage> {
+class MainApp extends StatelessWidget {
+  const MainApp({Key? key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color.fromRGBO(244, 243, 243, 1),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.menu,
-            color: Colors.black87,
-          ),
-          onPressed: () {},
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                    BorderRadius.vertical(bottom: Radius.circular(30))),
-                padding: EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Find Your',
-                      style: TextStyle(color: Colors.black87, fontSize: 25),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    Text(
-                      'Inspiration',
-                      style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                          color: Color.fromRGBO(244, 243, 243, 1),
-                          borderRadius: BorderRadius.circular(15)),
-                      child: TextField(
-                        decoration: InputDecoration(
-                            border: InputBorder.none,
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: Colors.black87,
-                            ),
-                            hintText: "Search you're looking for",
-                            hintStyle:
-                            TextStyle(color: Colors.grey, fontSize: 15)),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                  ],
-                ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: FutureBuilder(
+        future: _isFirstTimeUser(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            bool isFirstTimeUser = snapshot.data as bool;
+
+            if (isFirstTimeUser) {
+              // New user, show onboarding screen one
+              return OnboardingScreenOne();
+            } else {
+              // Returning user, navigate to home screen
+              return _buildMainApp();
+            }
+          } else {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
               ),
-              SizedBox(
-                height: 20,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Promo Today',
-                      style:
-                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    Container(
-                      height: 200,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: <Widget>[
-                          promoCard('assets/images/one.jpg'),
-                          promoCard('assets/images/two.jpg'),
-                          promoCard('assets/images/three.jpg'),
-                          promoCard('assets/images/four.jpg'),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        image: DecorationImage(
-                            fit: BoxFit.cover,
-                            image: AssetImage('assets/images/three.jpg')),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          gradient: LinearGradient(
-                              begin: Alignment.bottomRight,
-                              stops: [
-                                0.3,
-                                0.9
-                              ],
-                              colors: [
-                                Colors.black.withOpacity(.8),
-                                Colors.black.withOpacity(.2)
-                              ]),
-                        ),
-                        child: Align(
-                          alignment: Alignment.bottomLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.all(15.0),
-                            child: Text(
-                              'Best Design',
-                              style:
-                              TextStyle(color: Colors.white, fontSize: 20),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-        ),
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget promoCard(image) {
-    return AspectRatio(
-      aspectRatio: 2.62 / 3,
-      child: Container(
-        margin: EdgeInsets.only(right: 15.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          image: DecorationImage(fit: BoxFit.cover, image: AssetImage(image)),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(begin: Alignment.bottomRight, stops: [
-                0.1,
-                0.9
-              ], colors: [
-                Colors.black.withOpacity(.8),
-                Colors.black.withOpacity(.1)
-              ])),
-        ),
+  Widget _buildMainApp() {
+    return PersistentTabView(
+      context,
+      controller: PersistentTabController(initialIndex: 0),
+      screens: _buildScreens(),
+      items: _navBarsItems(),
+      confineInSafeArea: true,
+      backgroundColor: Colors.white,
+      handleAndroidBackButtonPress: true,
+      resizeToAvoidBottomInset: true,
+      stateManagement: true,
+      hideNavigationBarWhenKeyboardShows: true,
+      decoration: NavBarDecoration(
+        borderRadius: BorderRadius.circular(10.0),
+        boxShadow: [BoxShadow(color: Colors.grey, spreadRadius: 0.5, blurRadius: 0.7)],
+        colorBehindNavBar: Colors.white,
       ),
+      popAllScreensOnTapOfSelectedTab: true,
+      popActionScreens: PopActionScreensType.all,
+      itemAnimationProperties: ItemAnimationProperties(
+        duration: Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      ),
+      screenTransitionAnimation: ScreenTransitionAnimation(
+        animateTabTransition: true,
+        curve: Curves.easeInOut,
+        duration: Duration(milliseconds: 200),
+      ),
+      navBarStyle: NavBarStyle.style6, // Choose the nav bar style per your requirement
     );
+  }
+
+  List<Widget> _buildScreens() {
+    return [
+      Screen1(),
+      Screen2(),
+      Screen3(),
+      Screen4(),
+      Screen5(),
+    ];
+  }
+
+  List<PersistentBottomNavBarItem> _navBarsItems() {
+    return [
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.home),
+        title: "Home",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.data_usage),
+        title: "Data",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.report),
+        title: "Lapor",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.security),
+        title: "Mitigasi",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.settings),
+        title: "Setting",
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+    ];
+  }
+
+  Future<bool> _isFirstTimeUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool isFirstTimeUser = prefs.getBool('firstTimeUser') ?? true;
+
+    if (isFirstTimeUser) {
+      prefs.setBool('firstTimeUser', false);
+    }
+
+    return isFirstTimeUser;
   }
 }
