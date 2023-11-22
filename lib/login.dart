@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:kren/Home.dart';
 import 'package:kren/signup.dart';
+import 'package:kren/nav.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -107,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => HomePage(),
+                                  builder: (context) => NavPages(),
                                 ),
                               );
                             }

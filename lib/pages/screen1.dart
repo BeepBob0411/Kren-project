@@ -13,10 +13,11 @@ class Screen1 extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text('Welcome to Screen 1'),
-            // Tambahkan widget atau fungsionalitas lain sesuai kebutuhan
+            // Add additional widgets or functionality as needed
           ],
         ),
       ),
     );
   }
 }
+
