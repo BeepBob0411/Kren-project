@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:kren/services/weather_service.dart';
 import 'package:kren/models/weather_model.dart';
-import 'package:lottie/lottie.dart'; // Import Weather model
+import 'package:lottie/lottie.dart';
 
 class Screen2 extends StatefulWidget {
   const Screen2({Key? key}) : super(key: key);
@@ -13,7 +13,7 @@ class Screen2 extends StatefulWidget {
 
 class _Screen2State extends State<Screen2> {
   final _weatherService = WeatherService('c4829a7aa3b361a5740d769b7fda4438');
-  WeatherModel? _weather; // Use WeatherModel instead of Weather
+  WeatherModel? _weather;
 
   @override
   void initState() {
@@ -22,11 +22,9 @@ class _Screen2State extends State<Screen2> {
   }
 
   _fetchWeather() async {
-    String cityName = await _weatherService.getCurrentCity();
-    print('City Name: Balige');
-
     try {
-      final weather = await _weatherService.getWeather(cityName);
+      final cityName = await _weatherService.getCurrentCity();
+      final weather = await _weatherService.getWeatherForUserLocation(cityName);
       setState(() {
         _weather = weather;
       });
@@ -47,10 +45,11 @@ class _Screen2State extends State<Screen2> {
       case 'fog':
         return 'assets/animation/cloud.json';
       case 'rain':
+        return 'assets/animation/rain.json';
       case 'drizzle':
       case 'shower rain':
         return 'assets/animation/rain.json';
-      case 'thunderstrom':
+      case 'thunderstorm':
         return 'assets/animation/thunder.json';
       case 'clear':
         return 'assets/animation/sunny.json';
@@ -59,27 +58,35 @@ class _Screen2State extends State<Screen2> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     print(_weather?.temperature);
     return Scaffold(
       body: Center(
         child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(_weather?.cityName ?? "Loading city..."),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _weather != null
+                  ? 'Location: ${_weather?.cityName ?? ""}, ${_weather?.county ?? ""}, ${_weather?.district ?? ""}'
+                  : 'Loading location...',
+            ),
 
-          Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
-          // Use the getWeatherAnimation method
+            Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
 
-          Text('${_weather?.temperature.round()}°C'),
+            Text(
+              _weather != null
+                  ? 'Temperature: ${_weather?.temperature.round()}°C'
+                  : 'Loading temperature...',
+            ),
 
-          Text('${_weather?.mainCondition ?? ""}'),
-          // Add a closing quote
-
-        ],
-      ),
+            Text(
+              _weather != null
+                  ? 'Condition: ${_weather?.mainCondition ?? ""}'
+                  : 'Loading condition...',
+            ),
+          ],
+        ),
       ),
     );
   }
