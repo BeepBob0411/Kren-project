@@ -1,4 +1,3 @@
-// screen2.dart
 import 'package:flutter/material.dart';
 import 'package:kren/services/weather_service.dart';
 import 'package:kren/models/weather_model.dart';
@@ -62,30 +61,54 @@ class _Screen2State extends State<Screen2> {
   Widget build(BuildContext context) {
     print(_weather?.temperature);
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _weather != null
-                  ? 'Location: ${_weather?.cityName ?? ""}, ${_weather?.county ?? ""}, ${_weather?.district ?? ""}'
-                  : 'Loading location...',
-            ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _weather != null
+                    ? '${_weather?.cityName ?? ""}, ${_weather?.county ?? ""}, ${_weather?.district ?? ""}'
+                    : 'Loading location...',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
 
-            Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
+              SizedBox(height: 20),
 
-            Text(
-              _weather != null
-                  ? 'Temperature: ${_weather?.temperature.round()}°C'
-                  : 'Loading temperature...',
-            ),
+              Expanded(
+                child: Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
+              ),
 
-            Text(
-              _weather != null
-                  ? 'Condition: ${_weather?.mainCondition ?? ""}'
-                  : 'Loading condition...',
-            ),
-          ],
+              SizedBox(height: 20),
+
+              Text(
+                _weather != null
+                    ? '${_weather?.temperature.round()}°C'
+                    : 'Loading temperature...',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              Text(
+                _weather != null
+                    ? '${_weather?.mainCondition ?? ""}'
+                    : 'Loading condition...',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
