@@ -6,25 +6,47 @@ import 'package:kren/models/weather_model.dart';
 import 'package:geocoding/geocoding.dart';
 
 class WeatherService {
-  static const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
+  static const String _baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
+  static const String _forecastUrl = 'https://api.openweathermap.org/data/2.5/forecast';
+
   final String apiKey;
 
   WeatherService(this.apiKey);
 
-  Future<WeatherModel> getWeatherByCityId(int cityId) async {
-    final apiKey = 'c4829a7aa3b361a5740d769b7fda4438';
-    final response = await http.get(Uri.parse('$BASE_URL?id=$cityId&appid=$apiKey&units=metric'));
-    print('API Response : ${response.body}');
+  Future<List<WeatherModel>> getForecastForUserLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-    if (response.statusCode == 200) {
-      WeatherModel weather = WeatherModel.fromJson(jsonDecode(response.body));
-      return weather;
-    } else {
-      throw Exception('Failed to load weather data');
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final response = await http.get(Uri.parse(
+          '$_forecastUrl?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey&units=metric'));
+
+      print('Forecast API Response: ${response.statusCode}');
+      print('Forecast API Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        List<dynamic> forecastData = jsonDecode(response.body)['list'];
+        List<WeatherModel> forecastList = forecastData
+            .map((data) => WeatherModel.fromForecastJson(data))
+            .toList();
+        return forecastList;
+      } else {
+        print('Error fetching forecast data: ${response.statusCode}');
+        throw Exception('Failed to load forecast data');
+      }
+    } catch (e) {
+      print('Error fetching forecast data: $e');
+      throw Exception('Failed to load forecast data');
     }
   }
 
-  Future<WeatherModel> getWeatherForUserLocation(String cityName) async {
+  Future<WeatherModel> getWeatherForUserLocation({required String cityName}) async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -34,9 +56,9 @@ class WeatherService {
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    final apiKey = 'c4829a7aa3b361a5740d769b7fda4438';
-    final response = await http.get(Uri.parse('$BASE_URL?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey&units=metric'));
-    print('API Response : ${response.body}');
+    final response = await http.get(Uri.parse(
+        '$_baseUrl?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey&units=metric'));
+    print('API Response: ${response.body}');
 
     if (response.statusCode == 200) {
       WeatherModel weather = WeatherModel.fromJson(jsonDecode(response.body));
@@ -45,7 +67,6 @@ class WeatherService {
       throw Exception('Failed to load weather data');
     }
   }
-
 
   Future<String> getCurrentCity() async {
     LocationPermission permission = await Geolocator.checkPermission();

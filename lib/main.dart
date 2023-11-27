@@ -2,40 +2,58 @@ import 'package:flutter/material.dart';
 import 'package:kren/screen/onboarding/screen_one.dart';
 import 'package:kren/screen/onboarding/screen_two.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() {
-  runApp(const MainApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({Key? key});
+class MyApp extends StatelessWidget {
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: FutureBuilder(
-        future: _isFirstTimeUser(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            bool isFirstTimeUser = snapshot.data as bool;
+    return FutureBuilder(
+      future: _initialization,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            home: FutureBuilder(
+              future: _isFirstTimeUser(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  bool isFirstTimeUser = snapshot.data as bool;
 
-            if (isFirstTimeUser) {
-              // New user, show onboarding screen one
-              return OnboardingScreenOne();
-            } else {
-              // Returning user, navigate to screen two
-              return OnboardingScreenTwo();
-            }
-          } else {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
-        },
-      ),
+                  if (isFirstTimeUser) {
+                    // New user, show onboarding screen one
+                    return OnboardingScreenOne();
+                  } else {
+                    // Returning user, navigate to screen two
+                    return OnboardingScreenTwo();
+                  }
+                } else {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+              },
+            ),
+          );
+        }
+
+        // While waiting for Firebase to initialize, show a loading indicator
+        return MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
     );
   }
 
