@@ -1,10 +1,30 @@
+// lib/pages/screen4.dart
+
 import 'package:flutter/material.dart';
+import 'mitigasi/banjir.dart';
+import 'mitigasi/gempa.dart';
+import 'mitigasi/longsor.dart';
+import 'mitigasi/gunung.dart';
+import 'mitigasi/penyakit.dart';
+import 'mitigasi/teroris.dart';
+import 'mitigasi/kimia.dart';
+import 'mitigasi/sosial.dart';
 
 void main() => runApp(MaterialApp(
-  debugShowCheckedModeBanner: false,
-  theme: ThemeData(fontFamily: 'ModernFont'),
-  home: Screen4(),
-));
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: 'ModernFont'),
+      home: Screen4(),
+      routes: {
+        '/banjir': (context) => BanjirPage(),
+        '/gempa': (context) => GempaPage(),
+        '/longsor': (context) => LongsorPage(),
+        '/gunung': (context) => GunungPage(),
+        '/penyakit': (context) => PenyakitPage(),
+        '/teroris': (context) => TerorisPage(),
+        '/kimia': (context) => KimiaPage(),
+        '/sosial': (context) => SosialPage(),
+      },
+    ));
 
 class Screen4 extends StatefulWidget {
   @override
@@ -15,7 +35,7 @@ class _Screen4State extends State<Screen4> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white60, // Pastel Orange
+      backgroundColor: Colors.white60,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -58,22 +78,22 @@ class _Screen4State extends State<Screen4> {
                     MitigasiSection(
                       title: 'Mitigasi Bencana Alam',
                       promoCards: [
-                        promoCard('assets/images/one.jpg'),
-                        promoCard('assets/images/two.jpg'),
-                        promoCard('assets/images/three.jpg'),
-                        promoCard('assets/images/four.jpg'),
+                        promoCard('assets/images/banjir.jpg', '/banjir'),
+                        promoCard('assets/images/gempa.jpg', '/gempa'),
+                        promoCard('assets/images/longsor.jpg', '/longsor'),
+                        promoCard('assets/images/gunung.jpg', '/gunung'),
                       ],
                     ),
                     SizedBox(
                       height: 20,
                     ),
                     MitigasiSection(
-                      title: 'Mitigasi Bencana Sosial',
+                      title: 'Mitigasi Bencana Non Alam',
                       promoCards: [
-                        promoCard('assets/images/one.jpg'),
-                        promoCard('assets/images/two.jpg'),
-                        promoCard('assets/images/three.jpg'),
-                        promoCard('assets/images/four.jpg'),
+                        promoCard('assets/images/penyakit.jpg', '/penyakit'),
+                        promoCard('assets/images/teroris.jpg', '/teroris'),
+                        promoCard('assets/images/kimia.jpg', '/kimia'),
+                        promoCard('assets/images/tawuran.jpg', '/sosial'),
                       ],
                     ),
                     SizedBox(
@@ -91,7 +111,6 @@ class _Screen4State extends State<Screen4> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          // Remove the gradient
                         ),
                         child: Align(
                           alignment: Alignment.bottomLeft,
@@ -99,7 +118,10 @@ class _Screen4State extends State<Screen4> {
                             padding: const EdgeInsets.all(15.0),
                             child: Text(
                               'Panduan Mitigasi',
-                              style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -115,22 +137,54 @@ class _Screen4State extends State<Screen4> {
     );
   }
 
-  Widget promoCard(image) {
-    return AspectRatio(
-      aspectRatio: 2.62 / 3,
-      child: Container(
-        margin: EdgeInsets.only(right: 15.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          image: DecorationImage(fit: BoxFit.cover, image: AssetImage(image)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3), // Soft Black
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
-          ],
+  Widget promoCard(String image, String routeName) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          // Menentukan halaman tujuan berdasarkan rute dinamis
+          switch (routeName) {
+            case '/banjir':
+              return BanjirPage();
+            case '/gempa':
+              return GempaPage();
+            case '/longsor':
+              return LongsorPage();
+            case '/gunung':
+              return GunungPage();
+            case '/penyakit':
+              return PenyakitPage();
+            case '/teroris':
+              return TerorisPage();
+            case '/kimia':
+              return KimiaPage();
+            case '/sosial':
+              return SosialPage();
+            default:
+              // Jika rute tidak dikenali, bisa menangani dengan menampilkan halaman default atau memberikan notifikasi kesalahan
+              return Scaffold(
+                body: Center(
+                  child: Text('Halaman tidak ditemukan'),
+                ),
+              );
+          }
+        }));
+      },
+      child: AspectRatio(
+        aspectRatio: 2.62 / 3,
+        child: Container(
+          margin: EdgeInsets.only(right: 15.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            image: DecorationImage(fit: BoxFit.cover, image: AssetImage(image)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
         ),
       ),
     );
