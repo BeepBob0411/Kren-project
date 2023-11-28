@@ -73,25 +73,20 @@ class _Screen2State extends State<Screen2> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the current time
     DateTime currentTime = DateTime.now();
     int currentHour = currentTime.hour;
-
-    // Determine the background color based on the time of day
     Color backgroundColor;
+
     if (currentHour >= 6 && currentHour < 12) {
-      // Morning
       backgroundColor = Colors.yellow[100]!;
     } else if (currentHour >= 12 && currentHour < 18) {
-      // Afternoon
       backgroundColor = Colors.yellow[300]!;
     } else {
-      // Evening/Night
       backgroundColor = Colors.blueGrey[900]!;
     }
 
     return Scaffold(
-      backgroundColor: backgroundColor, // Set the background color
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -128,120 +123,177 @@ class _Screen2State extends State<Screen2> {
                 ),
               ),
               SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.wb_sunny,
-                    color: Colors.black,
-                    size: 18,
-                  ),
-                  SizedBox(width: 5),
-                  Text(
-                    _weather != null
-                        ? '${_weather?.mainCondition ?? ""}'
-                        : 'Loading condition...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+              WeatherInfo(
+                icon: Icons.wb_sunny,
+                label: 'Condition',
+                value: _weather?.mainCondition ?? 'Loading condition...',
               ),
               SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.thermostat,
-                    color: Colors.black,
-                    size: 18,
-                  ),
-                  SizedBox(width: 5),
-                  Text(
-                    _weather != null
-                        ? '${_weather?.windSpeed ?? ""} m/s Wind'
-                        : 'Loading wind speed...',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black,
-                    ),
-                  ),
-                ],
+              WeatherInfo(
+                icon: Icons.thermostat,
+                label: 'Wind Speed',
+                value: _weather?.windSpeed != null
+                    ? '${_weather!.windSpeed} m/s Wind'
+                    : 'Loading wind speed...',
               ),
               SizedBox(height: 20),
               if (_forecast != null)
-                Column(
-                  children: [
-                    Text(
-                      'Weather Forecast:',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    if (_forecast!.isNotEmpty)
-                      Container(
-                        height: 200,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _forecast!.length,
-                          itemBuilder: (context, index) {
-                            final forecast = _forecast![index];
-                            return Card(
-                              elevation: 4,
-                              margin: EdgeInsets.all(8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10.0),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${DateFormat('EEEE, MMM dd').format(forecast.dateTime)}, ${forecast.dateTime.hour}:00',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 5),
-                                    Text(
-                                      '${forecast.temperature.round()}°C, ${forecast.mainCondition}, ${forecast.windSpeed} m/s Wind',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    SizedBox(height: 10),
-                                    Image.asset(
-                                      getWeatherAnimation(mainCondition: forecast.mainCondition),
-                                      height: 50,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    if (_forecast!.isEmpty)
-                      Text(
-                        'No forecast available.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black,
-                        ),
-                      ),
-                  ],
-                ),
+                WeatherForecast(forecast: _forecast!),
               if (_forecast == null)
                 Center(
                   child: CircularProgressIndicator(),
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class WeatherInfo extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  WeatherInfo({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          icon,
+          color: Colors.black,
+          size: 18,
+        ),
+        SizedBox(width: 5),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class WeatherForecast extends StatelessWidget {
+  final List<WeatherModel> forecast;
+
+  WeatherForecast({
+    required this.forecast,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          'Weather Forecast:',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        if (forecast.isNotEmpty)
+          Container(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: forecast.length,
+              itemBuilder: (context, index) {
+                final forecastItem = forecast[index];
+                return WeatherForecastCard(forecast: forecastItem);
+              },
+            ),
+          ),
+        if (forecast.isEmpty)
+          Text(
+            'No forecast available.',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.black,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class WeatherForecastCard extends StatelessWidget {
+  final WeatherModel forecast;
+
+  WeatherForecastCard({
+    required this.forecast,
+  });
+
+  String getWeatherAnimation({String? mainCondition}) {
+    if (mainCondition == null) return 'assets/animation/sunny.json';
+
+    switch (mainCondition.toLowerCase()) {
+      case 'clouds':
+      case 'mist':
+      case 'smoke':
+      case 'haze':
+      case 'dust':
+      case 'fog':
+        return 'assets/animation/cloud.json';
+      case 'rain':
+        return 'assets/animation/rain.json';
+      case 'drizzle':
+      case 'shower rain':
+        return 'assets/animation/rain.json';
+      case 'thunderstorm':
+        return 'assets/animation/thunder.json';
+      case 'clear':
+        return 'assets/animation/sunny.json';
+      default:
+        return 'assets/animation/sunny.json';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 4,
+      margin: EdgeInsets.all(8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${DateFormat('EEEE, MMM dd').format(forecast.dateTime)}, ${forecast.dateTime.hour}:00',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 5),
+            Text(
+              '${forecast.temperature.round()}°C, ${forecast.mainCondition}, ${forecast.windSpeed} m/s Wind',
+              style: TextStyle(
+                fontSize: 14,
+              ),
+            ),
+            SizedBox(height: 10),
+            Lottie.asset(
+              getWeatherAnimation(mainCondition: forecast.mainCondition),
+              height: 50,
+            ),
+          ],
         ),
       ),
     );
