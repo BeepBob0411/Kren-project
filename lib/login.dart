@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:kren/signup.dart';
 import 'package:kren/nav.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -8,10 +10,14 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _loginInputController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-  String _usernameError = '';
+  String _loginInputError = '';
   String _passwordError = '';
+  String _accountNotExistError = '';
+
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +53,9 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         "Login",
                         style: TextStyle(
-                            fontSize: 30, fontWeight: FontWeight.bold),
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       SizedBox(
                         height: 20,
@@ -63,9 +71,9 @@ class _LoginPageState extends State<LoginPage> {
                     child: Column(
                       children: <Widget>[
                         inputFile(
-                          label: "Username",
-                          controller: _usernameController,
-                          errorText: _usernameError,
+                          label: "Username or Email",
+                          controller: _loginInputController,
+                          errorText: _loginInputError,
                         ),
                         inputFile(
                           label: "Password",
@@ -84,24 +92,74 @@ class _LoginPageState extends State<LoginPage> {
                       child: MaterialButton(
                         minWidth: double.infinity,
                         height: 60,
-                        onPressed: () {
-                          String username = _usernameController.text;
+                        onPressed: () async {
+                          String loginInput = _loginInputController.text;
                           String password = _passwordController.text;
 
                           setState(() {
-                            _usernameError =
-                            username.isEmpty ? "Masukkan Username Anda" : '';
-                            _passwordError = password.isEmpty
-                                ? "Masukkan Password Anda!"
-                                : '';
-                            // Add more conditions or validation checks as needed
+                            _loginInputError =
+                            loginInput.isEmpty ? "Enter your username or email" : '';
+                            _passwordError = password.isEmpty ? "Enter your password" : '';
+                            _accountNotExistError = ''; // Clear previous error
                           });
 
-                          if (_usernameError.isEmpty &&
-                              _passwordError.isEmpty) {
-                            // Continue with your login logic
-                            // Simulate login success for demonstration
-                            bool loginSuccess = true;
+                          if (_loginInputError.isEmpty && _passwordError.isEmpty) {
+                            bool loginSuccess = false;
+                            bool accountExists = false;
+
+                            // Check if the login input looks like an email
+                            bool isEmail = loginInput.contains('@');
+
+                            UserCredential? userCredential;
+
+                            try {
+                              if (isEmail) {
+                                // Use email for authentication
+                                userCredential = await _auth.signInWithEmailAndPassword(
+                                  email: loginInput,
+                                  password: password,
+                                );
+                              } else {
+                                // Use username for authentication
+                                // Implement your own logic to check existence by username
+                                accountExists = await checkAccountExistenceByUsername(loginInput);
+
+                                if (accountExists) {
+                                  // If account exists, try to sign in with email
+                                  // You may need to store user emails in a separate field in your database
+                                  String userEmail = await getUserEmailByUsername(loginInput);
+                                  userCredential = await _auth.signInWithEmailAndPassword(
+                                    email: userEmail,
+                                    password: password,
+                                  );
+                                }
+                              }
+
+                              if (userCredential?.user != null) {
+                                // Authentication successful
+                                loginSuccess = true;
+
+                                // Retrieve additional user data from Firestore
+                                DocumentSnapshot userDoc = await _firestore
+                                    .collection('users')
+                                    .doc(userCredential!.user!.uid)
+                                    .get();
+
+                                if (userDoc.exists) {
+                                  String userEmail = userDoc['email'];
+                                  String username = userDoc['username'];
+
+                                  print('User Email: $userEmail');
+                                  print('Username: $username');
+                                }
+                              }
+                            } catch (e) {
+                              // Handle authentication failure
+                              print('Authentication failed: $e');
+                              setState(() {
+                                _accountNotExistError = "Invalid credentials. Please try again.";
+                              });
+                            }
 
                             if (loginSuccess) {
                               Navigator.push(
@@ -134,6 +192,17 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
+                  if (_accountNotExistError.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        _accountNotExistError,
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
@@ -176,54 +245,69 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-}
 
-Widget inputFile({
-  label,
-  obscureText = false,
-  TextEditingController? controller,
-  errorText,
-}) {
-  controller ??= TextEditingController();
+  // Function to check if the account exists by username
+  Future<bool> checkAccountExistenceByUsername(String username) async {
+    // Implement your logic to check if the account exists by username
+    // Return true if the account exists, false otherwise
+    // This is a placeholder function, replace it with your actual implementation
+    return false;
+  }
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: <Widget>[
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          color: Colors.black87,
-        ),
-      ),
-      SizedBox(
-        height: 5,
-      ),
-      TextField(
-        controller: controller,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey[400]!),
-          ),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey[400]!),
-          ),
-        ),
-      ),
-      if (errorText != null && errorText.isNotEmpty)
+  // Function to get user email by username
+  Future<String> getUserEmailByUsername(String username) async {
+    // Implement your logic to retrieve the user email by username from your database
+    // This is a placeholder function, replace it with your actual implementation
+    return '';
+  }
+
+  Widget inputFile({
+    label,
+    obscureText = false,
+    TextEditingController? controller,
+    errorText,
+  }) {
+    controller ??= TextEditingController();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
         Text(
-          errorText,
+          label,
           style: TextStyle(
-            color: Colors.red,
-            fontSize: 12,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            color: Colors.black87,
           ),
         ),
-      SizedBox(
-        height: 10,
-      ),
-    ],
-  );
+        SizedBox(
+          height: 5,
+        ),
+        TextField(
+          controller: controller,
+          obscureText: obscureText,
+          decoration: InputDecoration(
+            contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[400]!),
+            ),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey[400]!),
+            ),
+          ),
+        ),
+        if (errorText != null && errorText.isNotEmpty)
+          Text(
+            errorText,
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 12,
+            ),
+          ),
+        SizedBox(
+          height: 10,
+        ),
+      ],
+    );
+  }
 }

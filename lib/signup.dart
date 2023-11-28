@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:kren/login.dart';
@@ -9,6 +11,9 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final _conUsername = TextEditingController();
   final _conEmail = TextEditingController();
   final _conPassword = TextEditingController();
@@ -82,7 +87,7 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
-  void signUp() {
+  Future<void> signUp() async {
     // Validation checks
     if (_conUsername.text.isEmpty ||
         _conEmail.text.isEmpty ||
@@ -92,13 +97,22 @@ class _SignupPageState extends State<SignupPage> {
         _selectedRegency.isEmpty) {
       // Handle empty fields
       setState(() {
-        _usernameNotification = _conUsername.text.isEmpty ? "Username is required" : "";
+        _usernameNotification =
+        _conUsername.text.isEmpty ? "Username is required" : "";
         _emailNotification = _conEmail.text.isEmpty ? "Email is required" : "";
-        _passwdNotification = _conPassword.text.isEmpty ? "Password is required" : "";
-        _cpasswdNotification = _conCPassword.text.isEmpty ? "Confirm Password is required" : "";
-        _selectedProvince = _selectedProvince.isEmpty ? "Please select a province" : "";
-        _selectedRegency = _selectedRegency.isEmpty ? "Please select a regency" : "";
+        _passwdNotification =
+        _conPassword.text.isEmpty ? "Password is required" : "";
+        _cpasswdNotification =
+        _conCPassword.text.isEmpty ? "Confirm Password is required" : "";
+        _selectedProvince =
+        _selectedProvince.isEmpty ? "Please select a province" : "";
+        _selectedRegency =
+        _selectedRegency.isEmpty ? "Please select a regency" : "";
       });
+
+      // Show a notification indicating that all fields are required
+      _showSnackBar("Please fill in all required fields");
+
       return;
     }
 
@@ -107,37 +121,88 @@ class _SignupPageState extends State<SignupPage> {
       setState(() {
         _cpasswdNotification = "Passwords do not match";
       });
+
+      // Show a notification indicating that passwords do not match
+      _showSnackBar("Passwords do not match");
+
       return;
     }
 
-    // Simulate registration
-    print('Registration successful!');
-    print('Username: ${_conUsername.text}');
-    print('Email: ${_conEmail.text}');
-    print('Province: $_selectedProvince');
-    print('Regency: $_selectedRegency');
-    // You can add more registration logic here
+    // Check if the entered username and email are unique
+    if (!await isUsernameUnique(_conUsername.text) ||
+        !await isEmailUnique(_conEmail.text)) {
+      setState(() {
+        _usernameNotification = "Username is already taken";
+        _emailNotification = "Email is already registered";
+      });
 
-    // Reset notifications and fields
-    setState(() {
-      _usernameNotification = "";
-      _emailNotification = "";
-      _passwdNotification = "";
-      _cpasswdNotification = "";
-      _selectedProvince = "";
-      _selectedRegency = "";
-    });
+      // Show a notification indicating that username or email is not unique
+      _showSnackBar("Username or Email is already taken");
 
-    // Clear text fields
-    _conUsername.clear();
-    _conEmail.clear();
-    _conPassword.clear();
-    _conCPassword.clear();
+      return;
+    }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-    );
+    try {
+      UserCredential userCredential =
+      await _auth.createUserWithEmailAndPassword(
+        email: _conEmail.text,
+        password: _conPassword.text,
+      );
+
+      await _firestore.collection('users').doc(userCredential.user?.uid).set({
+        'username': _conUsername.text,
+        'email': _conEmail.text,
+        'province': _selectedProvince,
+        'regency': _selectedRegency,
+      });
+
+      print('Registration successful!');
+      print('Username: ${_conUsername.text}');
+      print('Email: ${_conEmail.text}');
+      print('Province: $_selectedProvince');
+      print('Regency: $_selectedRegency');
+
+      setState(() {
+        _usernameNotification = "";
+        _emailNotification = "";
+        _passwdNotification = "";
+        _cpasswdNotification = "";
+        _selectedProvince = "";
+        _selectedRegency = "";
+      });
+
+      _conUsername.clear();
+      _conEmail.clear();
+      _conPassword.clear();
+      _conCPassword.clear();
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    } catch (e) {
+      print('Error creating account: $e');
+    }
+  }
+
+  Future<bool> isUsernameUnique(String username) async {
+    QuerySnapshot result = await _firestore
+        .collection('users')
+        .where('username', isEqualTo: username)
+        .limit(1)
+        .get();
+
+    return result.docs.isEmpty;
+  }
+
+  Future<bool> isEmailUnique(String email) async {
+    QuerySnapshot result = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    return result.docs.isEmpty;
   }
 
   Widget provinceDropdown() {
@@ -165,11 +230,11 @@ class _SignupPageState extends State<SignupPage> {
           onChanged: (String? value) {
             setState(() {
               _selectedProvince = value ?? "";
-              _selectedProvinceId = _provinces.firstWhere(
+              _selectedProvinceId = _provinces
+                  .firstWhere(
                       (province) => province["name"] == _selectedProvince)["id"];
               _fetchRegencies(_selectedProvinceId);
-              _selectedRegency =
-              ""; // Reset selected regency when province changes
+              _selectedRegency = "";
             });
           },
         ),
@@ -179,7 +244,6 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   Widget regencyDropdown() {
-    // Add an empty regency to the list
     List<String> regenciesWithEmpty = [""]..addAll(_regencies);
 
     return Column(
@@ -196,7 +260,7 @@ class _SignupPageState extends State<SignupPage> {
         SizedBox(height: 5),
         DropdownButton<String>(
           isExpanded: true,
-          value: _selectedRegency.isNotEmpty ? _selectedRegency : null,
+          value: _selectedRegency ?? null,
           items: regenciesWithEmpty.map((regency) {
             return DropdownMenuItem<String>(
               value: regency,
@@ -283,6 +347,15 @@ class _SignupPageState extends State<SignupPage> {
           height: 10,
         ),
       ],
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 2),
+      ),
     );
   }
 
