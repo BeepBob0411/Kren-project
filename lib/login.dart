@@ -3,6 +3,7 @@ import 'package:kren/signup.dart';
 import 'package:kren/nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -15,9 +16,39 @@ class _LoginPageState extends State<LoginPage> {
   String _loginInputError = '';
   String _passwordError = '';
   String _accountNotExistError = '';
+  bool _isPasswordVisible = false;
+  bool _rememberMe = false;
 
   FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMeStatus();
+  }
+
+  // Load "Remember Me" status from SharedPreferences
+  _loadRememberMeStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _rememberMe = prefs.getBool('rememberMe') ?? false;
+      if (_rememberMe) {
+        _loginInputController.text = prefs.getString('savedLoginInput') ?? '';
+      }
+    });
+  }
+
+  // Save "Remember Me" status to SharedPreferences
+  _saveRememberMeStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('rememberMe', _rememberMe);
+    if (_rememberMe) {
+      prefs.setString('savedLoginInput', _loginInputController.text);
+    } else {
+      prefs.remove('savedLoginInput');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,10 +108,39 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         inputFile(
                           label: "Password",
-                          obscureText: true,
+                          obscureText: !_isPasswordVisible,
                           controller: _passwordController,
                           errorText: _passwordError,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
                         ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 40),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value!;
+                            });
+                          },
+                        ),
+                        Text("Remember Me"),
                       ],
                     ),
                   ),
@@ -99,7 +159,8 @@ class _LoginPageState extends State<LoginPage> {
                           setState(() {
                             _loginInputError =
                             loginInput.isEmpty ? "Enter your username or email" : '';
-                            _passwordError = password.isEmpty ? "Enter your password" : '';
+                            _passwordError =
+                            password.isEmpty ? "Enter your password" : '';
                             _accountNotExistError = ''; // Clear previous error
                           });
 
@@ -122,12 +183,14 @@ class _LoginPageState extends State<LoginPage> {
                               } else {
                                 // Use username for authentication
                                 // Implement your own logic to check existence by username
-                                accountExists = await checkAccountExistenceByUsername(loginInput);
+                                accountExists =
+                                await checkAccountExistenceByUsername(loginInput);
 
                                 if (accountExists) {
                                   // If account exists, try to sign in with email
                                   // You may need to store user emails in a separate field in your database
-                                  String userEmail = await getUserEmailByUsername(loginInput);
+                                  String userEmail =
+                                  await getUserEmailByUsername(loginInput);
                                   userCredential = await _auth.signInWithEmailAndPassword(
                                     email: userEmail,
                                     password: password,
@@ -157,11 +220,18 @@ class _LoginPageState extends State<LoginPage> {
                               // Handle authentication failure
                               print('Authentication failed: $e');
                               setState(() {
-                                _accountNotExistError = "Invalid credentials. Please try again.";
+                                _accountNotExistError =
+                                "Invalid credentials. Please try again.";
                               });
                             }
 
                             if (loginSuccess) {
+                              // Save "Remember Me" status after successful login
+                              _saveRememberMeStatus();
+
+                              // Show success notification
+                              _showSuccessSnackBar("Login successful");
+
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -266,6 +336,7 @@ class _LoginPageState extends State<LoginPage> {
     obscureText = false,
     TextEditingController? controller,
     errorText,
+    Widget? suffixIcon,
   }) {
     controller ??= TextEditingController();
 
@@ -294,6 +365,7 @@ class _LoginPageState extends State<LoginPage> {
             border: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.grey[400]!),
             ),
+            suffixIcon: suffixIcon,
           ),
         ),
         if (errorText != null && errorText.isNotEmpty)
@@ -308,6 +380,21 @@ class _LoginPageState extends State<LoginPage> {
           height: 10,
         ),
       ],
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check, color: Colors.green),
+            SizedBox(width: 5),
+            Text(message),
+          ],
+        ),
+        duration: Duration(seconds: 2),
+      ),
     );
   }
 }

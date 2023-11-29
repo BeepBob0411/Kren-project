@@ -24,9 +24,6 @@ class Screen1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Beranda'),
-      ),
       body: Column(
         children: [
           Container(
@@ -42,7 +39,7 @@ class Screen1 extends StatelessWidget {
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: 2, // Ganti dengan jumlah berita yang ada
+              itemCount: 2,
               itemBuilder: (context, index) {
                 return BeritaItem(
                   judul: 'Gempa Bumi Guncang Wilayah Simasom',

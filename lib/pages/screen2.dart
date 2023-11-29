@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:kren/services/weather_service.dart';
 import 'package:kren/models/weather_model.dart';
 import 'package:lottie/lottie.dart';
+import 'dart:core';
+
 
 class Screen2 extends StatefulWidget {
   const Screen2({Key? key}) : super(key: key);
@@ -27,7 +29,8 @@ class _Screen2State extends State<Screen2> {
   _fetchWeather() async {
     try {
       final cityName = await _weatherService.getCurrentCity();
-      final weather = await _weatherService.getWeatherForUserLocation(cityName: cityName);
+      final weather = await _weatherService.getWeatherForUserLocation(
+          cityName: cityName);
       setState(() {
         _weather = weather;
       });
@@ -96,7 +99,8 @@ class _Screen2State extends State<Screen2> {
             children: [
               Text(
                 _weather != null
-                    ? '${_weather?.cityName ?? ""}, ${_weather?.county ?? ""}, ${_weather?.district ?? ""}'
+                    ? '${_weather?.cityName ?? ""}, ${_weather?.county ??
+                    ""}, ${_weather?.district ?? ""}'
                     : 'Loading location...',
                 style: TextStyle(
                   fontSize: 24,
@@ -133,9 +137,8 @@ class _Screen2State extends State<Screen2> {
               WeatherInfo(
                 icon: Icons.thermostat,
                 label: 'Wind Speed',
-                value: _weather?.windSpeed != null
-                    ? '${_weather!.windSpeed} m/s Wind'
-                    : 'Loading wind speed...',
+                value: _weather?.windSpeed != null ? '${_weather!
+                    .windSpeed} m/s Wind' : 'Loading wind speed...',
               ),
               SizedBox(height: 20),
               _buildWeatherForecastSection(),
@@ -147,60 +150,64 @@ class _Screen2State extends State<Screen2> {
   }
 
   Widget _buildWeatherForecastSection() {
-    return Column(
-      children: [
-        Text(
-          'Weather Forecast:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        _forecast != null
-            ? _showFullForecast
-                ? _buildFullWeatherForecast()
-                : _buildShortWeatherForecast()
-            : Center(
-                child: CircularProgressIndicator(),
-              ),
-        SizedBox(height: 10),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _showFullForecast = !_showFullForecast;
-            });
-          },
-          child: Text(
-            _showFullForecast ? 'Show Less' : 'Read More',
+    return Expanded(
+      child: ListView(
+        children: [
+          Text(
+            'Weather Forecast:',
             style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
-        ),
-      ],
+          _forecast != null
+              ? _showFullForecast
+              ? _buildFullWeatherForecast()
+              : _buildShortWeatherForecast()
+              : Center(
+            child: CircularProgressIndicator(),
+          ),
+          SizedBox(height: 10),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _showFullForecast = !_showFullForecast;
+              });
+            },
+            child: Text(
+              _showFullForecast ? 'Show Less' : 'Read More',
+              style: TextStyle(
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
+
   Widget _buildShortWeatherForecast() {
-    if (_forecast!.isNotEmpty) {
-      final firstDayForecast = _forecast![0];
-      return WeatherForecastCard(forecast: firstDayForecast);
-    } else {
-      return Text(
-        'No forecast available.',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.black,
-        ),
-      );
-    }
+    return _forecast!.isNotEmpty
+        ? WeatherForecastCard(forecast: _forecast![0])
+        : Text(
+      'No forecast available.',
+      style: TextStyle(
+        fontSize: 16,
+        color: Colors.black,
+      ),
+    );
   }
 
   Widget _buildFullWeatherForecast() {
+    if (_forecast == null) {
+      return CircularProgressIndicator();
+    }
+
     Map<String, List<WeatherModel>> groupedForecast = {};
 
-    // Group forecast by day
+    // Assuming you have grouped the forecast by day
     for (var forecastItem in _forecast!) {
       String day = DateFormat('EEEE, MMM dd').format(forecastItem.dateTime);
       if (!groupedForecast.containsKey(day)) {
@@ -209,44 +216,49 @@ class _Screen2State extends State<Screen2> {
       groupedForecast[day]!.add(forecastItem);
     }
 
-    return Container(
-      height: 200,
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: groupedForecast.length,
-        itemBuilder: (context, index) {
-          String day = groupedForecast.keys.elementAt(index);
-          List<WeatherModel> dailyForecast = groupedForecast[day]!;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                day,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+    return SizedBox(
+      height: 600, // Set your preferred height
+      child: ListView(
+        children: [
+          Text(
+            'Weather Forecast:',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          ...groupedForecast.keys.map((day) {
+            List<WeatherModel> dailyForecast = groupedForecast[day]!;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  day,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              SizedBox(height: 5),
-              Container(
-                height: 120,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: dailyForecast.length,
-                  itemBuilder: (context, index) {
-                    final forecastItem = dailyForecast[index];
-                    return WeatherForecastCard(forecast: forecastItem);
-                  },
+                SizedBox(height: 5),
+                Container(
+                  height: 200, // Set a fixed height for the inner ListView
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: ClampingScrollPhysics(),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: dailyForecast.length,
+                    itemBuilder: (context, index) {
+                      final forecastItem = dailyForecast[index];
+                      return WeatherForecastCard(forecast: forecastItem);
+                    },
+                  ),
                 ),
-              ),
-              SizedBox(height: 10),
-            ],
-          );
-        },
+                SizedBox(height: 10),
+              ],
+            );
+          }).toList(),
+        ],
       ),
     );
   }

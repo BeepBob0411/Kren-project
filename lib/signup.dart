@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
+
 import 'dart:convert';
-import 'package:kren/login.dart';
+
+import 'login.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -11,6 +13,10 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+
+  bool isPasswordVisible = false;
+  bool _isPasswordVisible = false;
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -29,6 +35,8 @@ class _SignupPageState extends State<SignupPage> {
 
   List<Map<String, dynamic>> _provinces = [];
   List<String> _regencies = [];
+
+
 
   @override
   void initState() {
@@ -56,7 +64,7 @@ class _SignupPageState extends State<SignupPage> {
           _provinces = provincesData;
         });
       } else {
-        print('Failed to load provinces');
+        print('Failed to load provinces. Status code: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching provinces: $error');
@@ -76,11 +84,14 @@ class _SignupPageState extends State<SignupPage> {
           }),
         );
 
+        // Filter out duplicate values
+        final uniqueRegencies = regenciesData.toSet().toList();
+
         setState(() {
-          _regencies = regenciesData;
+          _regencies = uniqueRegencies;
         });
       } else {
-        print('Failed to load regencies');
+        print('Failed to load regencies. Status code: ${response.statusCode}');
       }
     } catch (error) {
       print('Error fetching regencies: $error');
@@ -139,6 +150,12 @@ class _SignupPageState extends State<SignupPage> {
       // Show a notification indicating that username or email is not unique
       _showSnackBar("Username or Email is already taken");
 
+      return;
+    }
+
+    // Check if the province and regency are selected
+    if (_selectedProvince.isEmpty || _selectedRegency.isEmpty) {
+      _showSnackBar("Please select province and regency");
       return;
     }
 
@@ -220,31 +237,39 @@ class _SignupPageState extends State<SignupPage> {
         SizedBox(height: 5),
         DropdownButton<String>(
           isExpanded: true,
-          value: _selectedProvince.isNotEmpty ? _selectedProvince : null,
+          value: _selectedProvinceId.isNotEmpty ? _selectedProvinceId : null,
           items: _provinces.map((province) {
             return DropdownMenuItem<String>(
-              value: province["name"],
+              value: province["id"],
               child: Text(province["name"]),
             );
           }).toList(),
           onChanged: (String? value) {
             setState(() {
-              _selectedProvince = value ?? "";
-              _selectedProvinceId = _provinces
+              _selectedProvinceId = value ?? "";
+              _selectedProvince = _provinces
                   .firstWhere(
-                      (province) => province["name"] == _selectedProvince)["id"];
+                      (province) => province["id"] == _selectedProvinceId)["name"];
               _fetchRegencies(_selectedProvinceId);
               _selectedRegency = "";
             });
           },
         ),
+        if (_selectedProvince.isEmpty && _selectedRegency.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+            child: Text(
+              'Please select a province',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
         SizedBox(height: 10),
       ],
     );
   }
 
   Widget regencyDropdown() {
-    List<String> regenciesWithEmpty = [""]..addAll(_regencies);
+    List<String> regenciesWithEmpty = [""]..addAll(Set<String>.from(_regencies));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +285,7 @@ class _SignupPageState extends State<SignupPage> {
         SizedBox(height: 5),
         DropdownButton<String>(
           isExpanded: true,
-          value: _selectedRegency ?? null,
+          value: _selectedRegency.isNotEmpty ? _selectedRegency : null,
           items: regenciesWithEmpty.map((regency) {
             return DropdownMenuItem<String>(
               value: regency,
@@ -273,6 +298,14 @@ class _SignupPageState extends State<SignupPage> {
             });
           },
         ),
+        if (_selectedRegency.isEmpty && _selectedProvince.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+            child: Text(
+              'Please select a regency',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
         SizedBox(height: 10),
       ],
     );
@@ -306,9 +339,9 @@ class _SignupPageState extends State<SignupPage> {
         ),
         TextField(
           controller: controller,
-          obscureText: obscureText,
+          obscureText: obscureText && !_isPasswordVisible,
           decoration: InputDecoration(
-            contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+            contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 15),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(color: Colors.grey[400]!),
             ),
@@ -325,12 +358,14 @@ class _SignupPageState extends State<SignupPage> {
             suffixIcon: isPasswordVisible != null
                 ? IconButton(
               onPressed: () {
-                isPasswordVisible(!obscureText);
+                isPasswordVisible(!_isPasswordVisible);
               },
-              icon: obscureText
-                  ? Icon(Icons.visibility)
-                  : Icon(Icons.visibility_off),
-              color: Colors.grey,
+              icon: Icon(
+                _isPasswordVisible
+                    ? Icons.visibility
+                    : Icons.visibility_off,
+                color: Colors.grey,
+              ),
             )
                 : null,
           ),
@@ -338,9 +373,15 @@ class _SignupPageState extends State<SignupPage> {
         if (notificationText != null)
           Padding(
             padding: const EdgeInsets.only(left: 8.0, top: 4.0),
-            child: Text(
-              notificationText,
-              style: TextStyle(color: Colors.red),
+            child: Row(
+              children: [
+                Icon(Icons.error, color: Colors.red),
+                SizedBox(width: 5),
+                Text(
+                  notificationText,
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
             ),
           ),
         SizedBox(
@@ -354,6 +395,21 @@ class _SignupPageState extends State<SignupPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check, color: Colors.green),
+            SizedBox(width: 5),
+            Text(message),
+          ],
+        ),
         duration: Duration(seconds: 2),
       ),
     );
@@ -430,6 +486,11 @@ class _SignupPageState extends State<SignupPage> {
                         controller: _conPassword,
                         icon: const Icon(Icons.lock),
                         notificationText: _passwdNotification,
+                        isPasswordVisible: (isVisible) {
+                          setState(() {
+                            _isPasswordVisible = isVisible;
+                          });
+                        },
                       ),
                       inputFile(
                         label: 'Confirm Password',
@@ -438,33 +499,58 @@ class _SignupPageState extends State<SignupPage> {
                         icon: const Icon(Icons.lock_outline),
                         notificationText: _cpasswdNotification,
                       ),
+                      SizedBox(height: 20),
+                      Container(
+                        padding: EdgeInsets.only(),
+                        decoration: BoxDecoration(),
+                        child: MaterialButton(
+                          minWidth: double.infinity,
+                          height: 60,
+                          onPressed: () {
+                            signUp();
+                            _showSuccessSnackBar("Account successfully registered");
+                          },
+                          color: Color(0xff0095FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Text(
+                            "Sign up",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text("Already have an account? "),
+                          TextButton(
+                            onPressed: () {
+                              // Navigate to the login page
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => LoginPage()),
+                              );
+                            },
+                            child: Text(
+                              "Sign In",
+                              style: TextStyle(
+                                color: Color(0xff0095FF),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
-                Container(
-                  padding: EdgeInsets.only(),
-                  decoration: BoxDecoration(),
-                  child: MaterialButton(
-                    minWidth: double.infinity,
-                    height: 60,
-                    onPressed: () {
-                      signUp();
-                    },
-                    color: Color(0xff0095FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: Text(
-                      "Sign up",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                )
               ],
             ),
           ),
@@ -473,3 +559,5 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 }
+
+
