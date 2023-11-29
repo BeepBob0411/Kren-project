@@ -15,6 +15,7 @@ class _Screen2State extends State<Screen2> {
   final _weatherService = WeatherService('c4829a7aa3b361a5740d769b7fda4438');
   WeatherModel? _weather;
   List<WeatherModel>? _forecast;
+  bool _showFullForecast = false;
 
   @override
   void initState() {
@@ -137,15 +138,115 @@ class _Screen2State extends State<Screen2> {
                     : 'Loading wind speed...',
               ),
               SizedBox(height: 20),
-              if (_forecast != null)
-                WeatherForecast(forecast: _forecast!),
-              if (_forecast == null)
-                Center(
-                  child: CircularProgressIndicator(),
-                ),
+              _buildWeatherForecastSection(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildWeatherForecastSection() {
+    return Column(
+      children: [
+        Text(
+          'Weather Forecast:',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        _forecast != null
+            ? _showFullForecast
+                ? _buildFullWeatherForecast()
+                : _buildShortWeatherForecast()
+            : Center(
+                child: CircularProgressIndicator(),
+              ),
+        SizedBox(height: 10),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _showFullForecast = !_showFullForecast;
+            });
+          },
+          child: Text(
+            _showFullForecast ? 'Show Less' : 'Read More',
+            style: TextStyle(
+              color: Colors.black,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShortWeatherForecast() {
+    if (_forecast!.isNotEmpty) {
+      final firstDayForecast = _forecast![0];
+      return WeatherForecastCard(forecast: firstDayForecast);
+    } else {
+      return Text(
+        'No forecast available.',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.black,
+        ),
+      );
+    }
+  }
+
+  Widget _buildFullWeatherForecast() {
+    Map<String, List<WeatherModel>> groupedForecast = {};
+
+    // Group forecast by day
+    for (var forecastItem in _forecast!) {
+      String day = DateFormat('EEEE, MMM dd').format(forecastItem.dateTime);
+      if (!groupedForecast.containsKey(day)) {
+        groupedForecast[day] = [];
+      }
+      groupedForecast[day]!.add(forecastItem);
+    }
+
+    return Container(
+      height: 200,
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: groupedForecast.length,
+        itemBuilder: (context, index) {
+          String day = groupedForecast.keys.elementAt(index);
+          List<WeatherModel> dailyForecast = groupedForecast[day]!;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                day,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 5),
+              Container(
+                height: 120,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: dailyForecast.length,
+                  itemBuilder: (context, index) {
+                    final forecastItem = dailyForecast[index];
+                    return WeatherForecastCard(forecast: forecastItem);
+                  },
+                ),
+              ),
+              SizedBox(height: 10),
+            ],
+          );
+        },
       ),
     );
   }
@@ -180,50 +281,6 @@ class WeatherInfo extends StatelessWidget {
             color: Colors.black,
           ),
         ),
-      ],
-    );
-  }
-}
-
-class WeatherForecast extends StatelessWidget {
-  final List<WeatherModel> forecast;
-
-  WeatherForecast({
-    required this.forecast,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          'Weather Forecast:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        if (forecast.isNotEmpty)
-          Container(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: forecast.length,
-              itemBuilder: (context, index) {
-                final forecastItem = forecast[index];
-                return WeatherForecastCard(forecast: forecastItem);
-              },
-            ),
-          ),
-        if (forecast.isEmpty)
-          Text(
-            'No forecast available.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-          ),
       ],
     );
   }
@@ -275,7 +332,7 @@ class WeatherForecastCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${DateFormat('EEEE, MMM dd').format(forecast.dateTime)}, ${forecast.dateTime.hour}:00',
+              '${forecast.dateTime.hour}:00',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -293,6 +350,7 @@ class WeatherForecastCard extends StatelessWidget {
               getWeatherAnimation(mainCondition: forecast.mainCondition),
               height: 50,
             ),
+            SizedBox(height: 10),
           ],
         ),
       ),
