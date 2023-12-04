@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:kren/signup.dart';
 import 'package:kren/nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -21,7 +21,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   FirebaseAuth _auth = FirebaseAuth.instance;
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -54,122 +53,159 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     Color primaryColor = Color(0xFF0095FF);
-    Color accentColor = Colors.blue;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 0,
+    ThemeData _themeData = ThemeData(
+      primaryColor: primaryColor,
+      textTheme: GoogleFonts.poppinsTextTheme(),
+    );
+
+    return MaterialApp(
+      theme: _themeData,
+      home: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(
-            Icons.arrow_back_ios,
-            size: 20,
-            color: Colors.black,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.white,
+          leading: IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: Icon(
+              Icons.arrow_back_ios,
+              size: 20,
+              color: Colors.black,
+            ),
           ),
         ),
-      ),
-      body: Container(
-        height: MediaQuery.of(context).size.height,
-        width: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    child: Image.asset(
-                      "assets/images/logo.png", // Replace with your logo path
-                      height: 80,
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40),
-                    child: Column(
-                      children: <Widget>[
-                        inputFile(
-                          label: "Username or Email",
-                          controller: _loginInputController,
-                          errorText: _loginInputError,
+        body: SingleChildScrollView(
+          child: Container(
+            height: MediaQuery.of(context).size.height,
+            width: double.infinity,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Image.asset(
+                          "assets/images/logo.png",
+                          height: 80,
                         ),
-                        SizedBox(height: 20),
-                        inputFile(
-                          label: "Password",
-                          obscureText: !_isPasswordVisible,
-                          controller: _passwordController,
-                          errorText: _passwordError,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: _rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              _rememberMe = value!;
-                            });
-                          },
-                        ),
-                        Text("Remember Me"),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40),
-                    child: MaterialButton(
-                      minWidth: double.infinity,
-                      height: 60,
-                      onPressed: _isLoading ? null : () async {
-                        String loginInput = _loginInputController.text;
-                        String password = _passwordController.text;
-
-                        setState(() {
-                          _loginInputError =
-                          loginInput.isEmpty ? "Enter your username or email" : '';
-                          _passwordError =
-                          password.isEmpty ? "Enter your password" : '';
-                          _accountNotExistError = ''; // Clear previous error
-                        });
-
-                        if (_loginInputError.isEmpty && _passwordError.isEmpty) {
-                          // ... previous login logic
-                        }
-                      },
-                      color: primaryColor,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
                       ),
-                      child: _isLoading
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Container(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
-                        child: Center(
-                          child: Text(
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        child: Column(
+                          children: <Widget>[
+                            inputFile(
+                              label: "Username or Email",
+                              controller: _loginInputController,
+                              errorText: _loginInputError,
+                            ),
+                            SizedBox(height: 20),
+                            inputFile(
+                              label: "Password",
+                              obscureText: !_isPasswordVisible,
+                              controller: _passwordController,
+                              errorText: _passwordError,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberMe,
+                              onChanged: (value) {
+                                setState(() {
+                                  _rememberMe = value!;
+                                });
+                              },
+                            ),
+                            Text("Remember Me"),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        child: MaterialButton(
+                          minWidth: double.infinity,
+                          height: 60,
+                          onPressed: _isLoading
+                              ? null
+                              : () async {
+                            String loginInput = _loginInputController.text;
+                            String password = _passwordController.text;
+
+                            setState(() {
+                              _loginInputError =
+                              loginInput.isEmpty ? "Enter your username or email" : '';
+                              _passwordError =
+                              password.isEmpty ? "Enter your password" : '';
+                              _accountNotExistError = '';
+                            });
+
+                            if (_loginInputError.isEmpty &&
+                                _passwordError.isEmpty) {
+                              try {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+
+                                await _auth.signInWithEmailAndPassword(
+                                  email: _loginInputController.text,
+                                  password: _passwordController.text,
+                                );
+
+                                _saveRememberMeStatus();
+
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => NavPages(),
+                                  ),
+                                );
+
+                                print("Login successful");
+                              } catch (error) {
+                                print("Invalid email or password");
+                                setState(() {
+                                  _accountNotExistError =
+                                  "Invalid email or password. Please try again.";
+                                });
+                              } finally {
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              }
+                            }
+                          },
+                          color: primaryColor,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: _isLoading
+                              ? CircularProgressIndicator(color: Colors.white)
+                              : Text(
                             "Login",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
@@ -179,81 +215,79 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  if (_accountNotExistError.isNotEmpty)
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        _accountNotExistError,
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text("Don't have an account?"),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SignupPage(),
+                      if (_accountNotExistError.isNotEmpty)
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 40),
+                          child: Text(
+                            _accountNotExistError,
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
                             ),
-                          );
-                        },
-                        child: Text(
-                          " Sign Up",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 18,
-                            color: accentColor,
                           ),
+                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Text("Don't have an account?"),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SignupPage(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              " Sign Up",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: EdgeInsets.only(top: 20),
+                        child: Stack(
+                          children: [
+                            ClipPath(
+                              clipper: CurvedClipper(),
+                              child: Container(
+                                height: 80,
+                                color: primaryColor,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage("assets/images/background.png"),
+                                    fit: BoxFit.fitHeight,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: EdgeInsets.only(top: 20),
-                    child: Stack(
-                      children: [
-                        ClipPath(
-                          clipper: CurvedClipper(),
-                          child: Container(
-                            height: 80,
-                            color: accentColor,
-                          ),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 120,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage("assets/images/background.png"),
-                                fit: BoxFit.fitHeight,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )
-          ],
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
-
-  // ... (existing functions remain unchanged)
 
   Widget inputFile({
     label,
@@ -304,21 +338,6 @@ class _LoginPageState extends State<LoginPage> {
           height: 10,
         ),
       ],
-    );
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check, color: Colors.green),
-            SizedBox(width: 5),
-            Text(message),
-          ],
-        ),
-        duration: Duration(seconds: 2),
-      ),
     );
   }
 }

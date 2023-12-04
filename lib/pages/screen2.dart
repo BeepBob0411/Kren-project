@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:kren/services/weather_service.dart';
 import 'package:kren/models/weather_model.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 
 class Screen2 extends StatefulWidget {
   const Screen2({Key? key}) : super(key: key);
@@ -28,7 +29,8 @@ class _Screen2State extends State<Screen2> {
     try {
       final cityName = await _weatherService.getCurrentCity();
       final weather = await _weatherService.getWeatherForUserLocation(
-          cityName: cityName);
+        cityName: cityName,
+      );
       setState(() {
         _weather = weather;
       });
@@ -80,11 +82,11 @@ class _Screen2State extends State<Screen2> {
     Color backgroundColor;
 
     if (currentHour >= 6 && currentHour < 12) {
-      backgroundColor = Colors.yellow[100]!;
+      backgroundColor = Colors.blueAccent;
     } else if (currentHour >= 12 && currentHour < 18) {
-      backgroundColor = Colors.yellow[300]!;
+      backgroundColor = Colors.lightBlueAccent;
     } else {
-      backgroundColor = Colors.blueGrey[900]!;
+      backgroundColor = Colors.indigoAccent;
     }
 
     return Scaffold(
@@ -95,15 +97,19 @@ class _Screen2State extends State<Screen2> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              NeumorphicText(
                 _weather != null
                     ? '${_weather?.cityName ?? ""}, ${_weather?.county ??
                     ""}, ${_weather?.district ?? ""}'
                     : 'Loading location...',
-                style: TextStyle(
+                style: NeumorphicStyle(
+                  depth: 8,
+                  intensity: 0.8,
+                  color: Colors.black,
+                ),
+                textStyle: NeumorphicTextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 10),
@@ -115,14 +121,18 @@ class _Screen2State extends State<Screen2> {
                 ),
               ),
               SizedBox(height: 20),
-              Text(
+              NeumorphicText(
                 _weather != null
                     ? '${_weather?.temperature.round()}°C'
                     : 'Loading temperature...',
-                style: TextStyle(
+                style: NeumorphicStyle(
+                  depth: 8,
+                  intensity: 0.8,
+                  color: Colors.black,
+                ),
+                textStyle: NeumorphicTextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 10),
@@ -152,12 +162,16 @@ class _Screen2State extends State<Screen2> {
     return Expanded(
       child: ListView(
         children: [
-          Text(
+          NeumorphicText(
             'Weather Forecast:',
-            style: TextStyle(
+            style: NeumorphicStyle(
+              depth: 8,
+              intensity: 0.8,
+              color: Colors.black,
+            ),
+            textStyle: NeumorphicTextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
             ),
           ),
           _forecast != null
@@ -189,11 +203,15 @@ class _Screen2State extends State<Screen2> {
   Widget _buildShortWeatherForecast() {
     return _forecast!.isNotEmpty
         ? WeatherForecastCard(forecast: _forecast![0])
-        : Text(
+        : NeumorphicText(
       'No forecast available.',
-      style: TextStyle(
-        fontSize: 16,
+      style: NeumorphicStyle(
+        depth: 8,
+        intensity: 0.8,
         color: Colors.black,
+      ),
+      textStyle: NeumorphicTextStyle(
+        fontSize: 16,
       ),
     );
   }
@@ -218,12 +236,16 @@ class _Screen2State extends State<Screen2> {
       height: 600, // Set your preferred height
       child: ListView(
         children: [
-          Text(
+          NeumorphicText(
             'Weather Forecast:',
-            style: TextStyle(
+            style: NeumorphicStyle(
+              depth: 8,
+              intensity: 0.8,
+              color: Colors.black,
+            ),
+            textStyle: NeumorphicTextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
             ),
           ),
           ...groupedForecast.keys.map((day) {
@@ -231,9 +253,14 @@ class _Screen2State extends State<Screen2> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                NeumorphicText(
                   day,
-                  style: TextStyle(
+                  style: NeumorphicStyle(
+                    depth: 8,
+                    intensity: 0.8,
+                    color: Colors.black,
+                  ),
+                  textStyle: NeumorphicTextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -284,11 +311,15 @@ class WeatherInfo extends StatelessWidget {
           size: 18,
         ),
         SizedBox(width: 5),
-        Text(
+        NeumorphicText(
           value,
-          style: TextStyle(
-            fontSize: 18,
+          style: NeumorphicStyle(
+            depth: 8,
+            intensity: 0.8,
             color: Colors.black,
+          ),
+          textStyle: NeumorphicTextStyle(
+            fontSize: 18,
           ),
         ),
       ],
@@ -330,28 +361,38 @@ class WeatherForecastCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      margin: EdgeInsets.all(8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
+    return Neumorphic(
+      style: NeumorphicStyle(
+        depth: 8,
+        intensity: 0.8,
+        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(10)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            NeumorphicText(
               '${forecast.dateTime.hour}:00',
-              style: TextStyle(
+              style: NeumorphicStyle(
+                depth: 8,
+                intensity: 0.8,
+                color: Colors.black,
+              ),
+              textStyle: NeumorphicTextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 5),
-            Text(
+            NeumorphicText(
               '${forecast.temperature.round()}°C, ${forecast.mainCondition}, ${forecast.windSpeed} m/s Wind',
-              style: TextStyle(
+              style: NeumorphicStyle(
+                depth: 8,
+                intensity: 0.8,
+                color: Colors.black,
+              ),
+              textStyle: NeumorphicTextStyle(
                 fontSize: 14,
               ),
             ),
