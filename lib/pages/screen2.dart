@@ -3,8 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:kren/services/weather_service.dart';
 import 'package:kren/models/weather_model.dart';
 import 'package:lottie/lottie.dart';
-import 'dart:core';
-
 
 class Screen2 extends StatefulWidget {
   const Screen2({Key? key}) : super(key: key);
@@ -137,8 +135,9 @@ class _Screen2State extends State<Screen2> {
               WeatherInfo(
                 icon: Icons.thermostat,
                 label: 'Wind Speed',
-                value: _weather?.windSpeed != null ? '${_weather!
-                    .windSpeed} m/s Wind' : 'Loading wind speed...',
+                value: _weather?.windSpeed != null
+                    ? '${_weather!.windSpeed} m/s Wind'
+                    : 'Loading wind speed...',
               ),
               SizedBox(height: 20),
               _buildWeatherForecastSection(),
@@ -186,7 +185,6 @@ class _Screen2State extends State<Screen2> {
       ),
     );
   }
-
 
   Widget _buildShortWeatherForecast() {
     return _forecast!.isNotEmpty
