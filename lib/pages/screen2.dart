@@ -1,9 +1,11 @@
+// screen2.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kren/services/weather_service.dart';
 import 'package:kren/models/weather_model.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:kren/component/component_weather.dart';
 
 class Screen2 extends StatefulWidget {
   const Screen2({Key? key}) : super(key: key);
@@ -17,6 +19,7 @@ class _Screen2State extends State<Screen2> {
   WeatherModel? _weather;
   List<WeatherModel>? _forecast;
   bool _showFullForecast = false;
+  Map<String, bool> _expandState = {}; // Expand/collapse state for each day
 
   @override
   void initState() {
@@ -75,22 +78,45 @@ class _Screen2State extends State<Screen2> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  LinearGradient _getBackgroundGradient() {
     DateTime currentTime = DateTime.now();
     int currentHour = currentTime.hour;
-    Color backgroundColor;
 
     if (currentHour >= 6 && currentHour < 12) {
-      backgroundColor = Colors.blueAccent;
+      // Morning: Blue and white like clouds
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.blueAccent, Colors.white],
+      );
     } else if (currentHour >= 12 && currentHour < 18) {
-      backgroundColor = Colors.lightBlueAccent;
+      // Afternoon: Yellow like the sun
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.yellowAccent, Colors.white],
+      );
+    } else if (currentHour >= 18 && currentHour < 20) {
+      // Evening: Sunset gradient - Yellow, Orange, Red
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.yellow, Colors.orange, Colors.red],
+      );
     } else {
-      backgroundColor = Colors.indigoAccent;
+      // Night: Galaxy gradient (for example, blue and purple)
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Colors.indigo, Colors.purple],
+      );
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: _getBackgroundGradient().colors.first,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -188,11 +214,22 @@ class _Screen2State extends State<Screen2> {
                 _showFullForecast = !_showFullForecast;
               });
             },
-            child: Text(
-              _showFullForecast ? 'Show Less' : 'Read More',
-              style: TextStyle(
-                color: Colors.black,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _showFullForecast ? 'Show Less' : 'Read More',
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+                Icon(
+                  _showFullForecast
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: Colors.black,
+                ),
+              ],
             ),
           ),
         ],
@@ -202,7 +239,16 @@ class _Screen2State extends State<Screen2> {
 
   Widget _buildShortWeatherForecast() {
     return _forecast!.isNotEmpty
-        ? WeatherForecastCard(forecast: _forecast![0])
+        ? WeatherForecastCard(
+      forecast: _forecast![0],
+      backgroundColor: _getBackgroundGradient().colors.first,
+      onTap: () {
+        _toggleExpandState(_forecast![0]);
+      },
+      isExpanded: _expandState.containsKey(_forecast![0].dateTime.toString())
+          ? _expandState[_forecast![0].dateTime.toString()]!
+          : false,
+    )
         : NeumorphicText(
       'No forecast available.',
       style: NeumorphicStyle(
@@ -275,7 +321,16 @@ class _Screen2State extends State<Screen2> {
                     itemCount: dailyForecast.length,
                     itemBuilder: (context, index) {
                       final forecastItem = dailyForecast[index];
-                      return WeatherForecastCard(forecast: forecastItem);
+                      return WeatherForecastCard(
+                        forecast: forecastItem,
+                        backgroundColor: _getBackgroundGradient().colors.first,
+                        onTap: () {
+                          _toggleExpandState(forecastItem);
+                        },
+                        isExpanded: _expandState.containsKey(forecastItem.dateTime.toString())
+                            ? _expandState[forecastItem.dateTime.toString()]!
+                            : false,
+                      );
                     },
                   ),
                 ),
@@ -287,124 +342,16 @@ class _Screen2State extends State<Screen2> {
       ),
     );
   }
-}
 
-class WeatherInfo extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  WeatherInfo({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: Colors.black,
-          size: 18,
-        ),
-        SizedBox(width: 5),
-        NeumorphicText(
-          value,
-          style: NeumorphicStyle(
-            depth: 8,
-            intensity: 0.8,
-            color: Colors.black,
-          ),
-          textStyle: NeumorphicTextStyle(
-            fontSize: 18,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class WeatherForecastCard extends StatelessWidget {
-  final WeatherModel forecast;
-
-  WeatherForecastCard({
-    required this.forecast,
-  });
-
-  String getWeatherAnimation({String? mainCondition}) {
-    if (mainCondition == null) return 'assets/animation/sunny.json';
-
-    switch (mainCondition.toLowerCase()) {
-      case 'clouds':
-      case 'mist':
-      case 'smoke':
-      case 'haze':
-      case 'dust':
-      case 'fog':
-        return 'assets/animation/cloud.json';
-      case 'rain':
-        return 'assets/animation/rain.json';
-      case 'drizzle':
-      case 'shower rain':
-        return 'assets/animation/rain.json';
-      case 'thunderstorm':
-        return 'assets/animation/thunder.json';
-      case 'clear':
-        return 'assets/animation/sunny.json';
-      default:
-        return 'assets/animation/sunny.json';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Neumorphic(
-      style: NeumorphicStyle(
-        depth: 8,
-        intensity: 0.8,
-        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(10)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            NeumorphicText(
-              '${forecast.dateTime.hour}:00',
-              style: NeumorphicStyle(
-                depth: 8,
-                intensity: 0.8,
-                color: Colors.black,
-              ),
-              textStyle: NeumorphicTextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 5),
-            NeumorphicText(
-              '${forecast.temperature.round()}°C, ${forecast.mainCondition}, ${forecast.windSpeed} m/s Wind',
-              style: NeumorphicStyle(
-                depth: 8,
-                intensity: 0.8,
-                color: Colors.black,
-              ),
-              textStyle: NeumorphicTextStyle(
-                fontSize: 14,
-              ),
-            ),
-            SizedBox(height: 10),
-            Lottie.asset(
-              getWeatherAnimation(mainCondition: forecast.mainCondition),
-              height: 50,
-            ),
-            SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
+  // Function to toggle the expand/collapse state
+  void _toggleExpandState(WeatherModel forecastItem) {
+    setState(() {
+      String key = forecastItem.dateTime.toString();
+      if (_expandState.containsKey(key)) {
+        _expandState[key] = !_expandState[key]!;
+      } else {
+        _expandState[key] = true;
+      }
+    });
   }
 }
