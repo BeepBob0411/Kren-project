@@ -1,14 +1,31 @@
-import 'package:permission_handler/permission_handler.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart' as geocoding;
+import 'package:location/location.dart' as location;
 
 Future<void> getLocation() async {
-  PermissionStatus status = await Permission.locationWhenInUse.request();
-  if (status == PermissionStatus.granted) {
+  final location.Location locationService = location.Location();
+  location.PermissionStatus status = await locationService.hasPermission();
+
+  if (status == location.PermissionStatus.denied) {
+    await locationService.requestPermission();
+    status = await locationService.hasPermission();
+  }
+
+  if (status == location.PermissionStatus.granted) {
     try {
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+      location.LocationData userLocation = await locationService.getLocation();
+      List<geocoding.Placemark> placemarks = await geocoding.placemarkFromCoordinates(
+        userLocation.latitude!,
+        userLocation.longitude!,
       );
-      print('Latitude: ${position.latitude}, Longitude: ${position.longitude}');
+
+      if (placemarks.isNotEmpty) {
+        geocoding.Placemark place = placemarks[0];
+        String address =
+            "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+
+        print('User Location: $address');
+        // Gunakan nilai address sesuai kebutuhan Anda.
+      }
     } catch (e) {
       print('Error getting location: $e');
     }

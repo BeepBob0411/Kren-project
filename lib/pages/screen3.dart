@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'dart:async';
+import 'package:kren/constants/location_picker_map.dart';
+import 'package:flutter/services.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
+
 
 enum JenisBencana { alam, nonAlam }
 
@@ -29,30 +32,11 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
   final _lokasiBencanaController = TextEditingController();
   final _keteranganBencanaController = TextEditingController();
   File? _image;
-  Position? _currentPosition;
   JenisBencana? _selectedJenisBencana;
   bool _isSubmitting = false;
 
   LatLng? _selectedLocation;
-
-  @override
-  void initState() {
-    super.initState();
-    _getCurrentLocation();
-  }
-
-  void _getCurrentLocation() async {
-    try {
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      setState(() {
-        _currentPosition = position;
-      });
-    } catch (e) {
-      print("Error getting location: $e");
-    }
-  }
+  String _selectedLocationText = '';
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +72,12 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
               ),
               SizedBox(height: 16.0),
               _buildImageSelection(),
+              SizedBox(height: 16.0),
+              _buildTextField(
+                TextEditingController(text: _selectedLocationText),
+                "Koordinat Lokasi",
+                readOnly: true,
+              ),
               SizedBox(height: 16.0),
               _buildSubmitButton(),
             ],
@@ -147,11 +137,8 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
   }
 
   Widget _buildTextField(
-      TextEditingController controller,
-      String labelText, {
-        bool readOnly = false,
-        Function()? onTap,
-      }) {
+      TextEditingController controller, String labelText,
+      {bool readOnly = false, Function()? onTap}) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.0),
       decoration: BoxDecoration(
@@ -186,6 +173,8 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
         _selectedLocation = pickedLocation;
         _lokasiBencanaController.text =
         "Lat: ${pickedLocation.latitude}, Lng: ${pickedLocation.longitude}";
+        _selectedLocationText =
+        "${pickedLocation.latitude}, ${pickedLocation.longitude}";
       });
     }
   }
@@ -197,7 +186,8 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
         TextButton(
           onPressed: () async {
             final ImageSource source = ImageSource.camera;
-            final XFile? image = await ImagePicker().pickImage(source: source);
+            final XFile? image =
+            await ImagePicker().pickImage(source: source);
 
             if (image != null) {
               setState(() {
@@ -271,50 +261,8 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
       _lokasiBencanaController.clear();
       _keteranganBencanaController.clear();
       _image = null;
+      _selectedLocation = null;
+      _selectedLocationText = '';
     });
-  }
-}
-
-class LocationPickerMap extends StatefulWidget {
-  @override
-  _LocationPickerMapState createState() => _LocationPickerMapState();
-}
-
-class _LocationPickerMapState extends State<LocationPickerMap> {
-  late GoogleMapController _mapController;
-
-  LatLng _pickedLocation = LatLng(-6.2088, 106.8456); // Default to Jakarta, Indonesia
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pick a Location'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.check),
-            onPressed: () {
-              Navigator.pop(context, _pickedLocation);
-            },
-          ),
-        ],
-      ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _pickedLocation,
-          zoom: 14.0,
-        ),
-        onMapCreated: (controller) {
-          setState(() {
-            _mapController = controller;
-          });
-        },
-        onTap: (latLng) {
-          setState(() {
-            _pickedLocation = latLng;
-          });
-        },
-      ),
-    );
   }
 }
