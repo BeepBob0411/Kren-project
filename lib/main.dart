@@ -3,6 +3,10 @@ import 'package:kren/screen/onboarding/screen_one.dart';
 import 'package:kren/screen/onboarding/screen_two.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+// import 'package:flutter/services.dart';
+// import 'package:flutter/scheduler.dart';
+// import 'package:kren/theme/theme_helper.dart';
+// import 'package:kren/routes/app_routes.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
