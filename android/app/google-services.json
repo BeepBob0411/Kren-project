@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "619286408558",
-    "project_id": "resqube-d2aa8",
-    "storage_bucket": "resqube-d2aa8.appspot.com"
+    "project_number": "443999477170",
+    "project_id": "resqube-31f3c",
+    "storage_bucket": "resqube-31f3c.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:619286408558:android:c72b0a3c5189be91a8657f",
+        "mobilesdk_app_id": "1:443999477170:android:4cc955474b89a31b5e58ab",
         "android_client_info": {
           "package_name": "com.example.kren"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC8U7ITbDF1u-9yjXBIXmE7Ouiyex0Abr8"
+          "current_key": "AIzaSyBhi5DfwJM7ZDFsvtIxuLuwOm12-Ghr2tI"
         }
       ],
       "services": {
