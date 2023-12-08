@@ -16,7 +16,7 @@ class GempaPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Image.asset(
-              'assets/gempa.jpg', // Path to the gempa image in your assets folder
+              'assets/images/gempa.jpg', // Path to the gempa image in your assets folder
               height: 200,
               fit: BoxFit.cover,
             ),
