@@ -4,7 +4,14 @@ import 'package:kren/screen/onboarding/screen_one.dart';
 import 'package:kren/screen/onboarding/screen_two.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+<<<<<<< HEAD
+// import 'package:flutter/services.dart';
+// import 'package:flutter/scheduler.dart';
+// import 'package:kren/theme/theme_helper.dart';
+// import 'package:kren/routes/app_routes.dart';
+=======
 import 'firebase_options.dart';
+>>>>>>> 6e558a952a1d0dc5b4f7021147e841577d07112a
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
