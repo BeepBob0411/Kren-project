@@ -1,10 +1,27 @@
+
 import 'package:flutter/material.dart';
-import 'package:kren/signup.dart';
-import 'package:kren/nav.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'nav.dart';
+import 'package:kren/officer/tampilan_petugas/nav_petugas.dart';
+import 'package:kren/signup.dart';
 
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: LoginPage(),
+    );
+  }
+}
+
+// login.dart
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -19,6 +36,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
   bool _isLoading = false;
+  bool _isUser = true;
 
   FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -28,7 +46,6 @@ class _LoginPageState extends State<LoginPage> {
     _loadRememberMeStatus();
   }
 
-  // Load "Remember Me" status from SharedPreferences
   _loadRememberMeStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -39,7 +56,6 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  // Save "Remember Me" status to SharedPreferences
   _saveRememberMeStatus() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('rememberMe', _rememberMe);
@@ -170,19 +186,33 @@ class _LoginPageState extends State<LoginPage> {
                                   _isLoading = true;
                                 });
 
-                                await _auth.signInWithEmailAndPassword(
-                                  email: _loginInputController.text,
-                                  password: _passwordController.text,
-                                );
+                                if (_isUser) {
+                                  await _auth.signInWithEmailAndPassword(
+                                    email: _loginInputController.text,
+                                    password: _passwordController.text,
+                                  );
 
-                                _saveRememberMeStatus();
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => NavPagesPetugas(),
+                                    ),
+                                  );
+                                } else {
+                                  await _auth.signInWithEmailAndPassword(
+                                    email: _loginInputController.text,
+                                    password: _passwordController.text,
+                                  );
 
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => NavPages(),
-                                  ),
-                                );
+                                  _saveRememberMeStatus();
+
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => NavPagesPetugas(),
+                                    ),
+                                  );
+                                }
 
                                 print("Login successful");
                               } catch (error) {
@@ -250,34 +280,6 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
-                      Container(
-                        padding: EdgeInsets.only(top: 20),
-                        child: Stack(
-                          children: [
-                            ClipPath(
-                              clipper: CurvedClipper(),
-                              child: Container(
-                                height: 80,
-                                color: primaryColor,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage("assets/images/background.png"),
-                                    fit: BoxFit.fitHeight,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 )
@@ -339,27 +341,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ],
     );
-  }
-}
-
-class CurvedClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final Path path = Path();
-    path.lineTo(0, size.height - 20);
-    double midPoint = size.width / 2;
-    double controlHeight = 30.0;
-    double endPoint = size.width;
-
-    path.quadraticBezierTo(midPoint - controlHeight, size.height, midPoint, size.height - 20);
-    path.quadraticBezierTo(midPoint + controlHeight, size.height - 40, endPoint, size.height - 20);
-    path.lineTo(endPoint, 0);
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) {
-    return false;
   }
 }
