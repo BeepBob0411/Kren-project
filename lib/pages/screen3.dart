@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:async';
-import 'package:kren/constants/location_picker_map.dart';
-import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' show LatLng;
-
+import 'package:kren/constants/location_picker_map.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 enum JenisBencana { alam, nonAlam }
 
@@ -36,7 +35,6 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
   bool _isSubmitting = false;
 
   LatLng? _selectedLocation;
-  String _selectedLocationText = '';
 
   @override
   Widget build(BuildContext context) {
@@ -66,18 +64,21 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
                 onTap: () => _pickLocation(context),
               ),
               SizedBox(height: 16.0),
+              // Display selected location
+              if (_selectedLocation != null)
+                Text(
+                  "Selected Location: Lat: ${_selectedLocation!.latitude}, Lng: ${_selectedLocation!.longitude}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              SizedBox(height: 16.0),
               _buildTextField(
                 _keteranganBencanaController,
                 "Keterangan Bencana",
               ),
               SizedBox(height: 16.0),
               _buildImageSelection(),
-              SizedBox(height: 16.0),
-              _buildTextField(
-                TextEditingController(text: _selectedLocationText),
-                "Koordinat Lokasi",
-                readOnly: true,
-              ),
               SizedBox(height: 16.0),
               _buildSubmitButton(),
             ],
@@ -145,16 +146,11 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: GestureDetector(
+      child: TextField(
+        controller: controller,
         onTap: onTap,
-        child: AbsorbPointer(
-          child: TextField(
-            controller: controller,
-            readOnly: readOnly,
-            decoration: InputDecoration(
-              labelText: labelText,
-            ),
-          ),
+        decoration: InputDecoration(
+          labelText: labelText,
         ),
       ),
     );
@@ -173,29 +169,41 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
         _selectedLocation = pickedLocation;
         _lokasiBencanaController.text =
         "Lat: ${pickedLocation.latitude}, Lng: ${pickedLocation.longitude}";
-        _selectedLocationText =
-        "${pickedLocation.latitude}, ${pickedLocation.longitude}";
       });
     }
   }
 
   Widget _buildImageSelection() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextButton(
-          onPressed: () async {
-            final ImageSource source = ImageSource.camera;
-            final XFile? image =
-            await ImagePicker().pickImage(source: source);
+        _image != null
+            ? Image.file(
+          _image!,
+          height: 100.0,
+          width: 100.0,
+          fit: BoxFit.cover,
+        )
+            : Container(),
+        SizedBox(height: 8.0),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () async {
+                final ImageSource source = ImageSource.camera;
+                final XFile? image =
+                await ImagePicker().pickImage(source: source);
 
-            if (image != null) {
-              setState(() {
-                _image = File(image.path);
-              });
-            }
-          },
-          child: Text("Pilih Gambar dari Kamera"),
+                if (image != null) {
+                  setState(() {
+                    _image = File(image.path);
+                  });
+                }
+              },
+              child: Text("Pilih Gambar dari Kamera"),
+            ),
+          ],
         ),
       ],
     );
@@ -236,20 +244,33 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
     return true;
   }
 
-  void _submitReport() {
+  void _submitReport() async {
     if (_validateForm()) {
       setState(() {
         _isSubmitting = true;
       });
 
-      // Simulate submission delay
-      Future.delayed(Duration(seconds: 2), () {
-        // Actual logic for submitting the report to the server
-        print('Data Terkirim!');
+      // Memeriksa dan meminta izin
+      var status = await Permission.location.request();
 
-        // Reset the form and loading state
-        _resetForm();
-      });
+      if (status == PermissionStatus.granted) {
+        // Izin diberikan, lanjutkan dengan logika pengiriman laporan
+        // Simulate submission delay
+        Future.delayed(Duration(seconds: 2), () {
+          // Actual logic for submitting the report to the server
+          print('Data Terkirim!');
+
+          // Reset the form and loading state
+          _resetForm();
+        });
+      } else {
+        // Izin tidak diberikan
+        print('Location permission denied.');
+
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -262,7 +283,12 @@ class _LaporkanKejadianState extends State<LaporkanKejadian> {
       _keteranganBencanaController.clear();
       _image = null;
       _selectedLocation = null;
-      _selectedLocationText = '';
     });
   }
+}
+
+void main() {
+  runApp(MaterialApp(
+    home: LaporkanKejadian(),
+  ));
 }
