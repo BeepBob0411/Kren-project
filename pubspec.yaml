@@ -47,9 +47,9 @@ dependencies:
   image_picker: ^1.0.4
   persistent_bottom_nav_bar: ^5.0.2
   lottie: ^2.7.0
-  firebase_core: ^2.23.0
-  firebase_auth: ^4.14.1
-  cloud_firestore: ^4.13.2
+  firebase_core: ^2.24.1
+  firebase_auth: ^4.15.1
+  cloud_firestore: ^4.13.4
   google_fonts: ^6.1.0
   flutter_neumorphic:
     git:
