@@ -16,7 +16,7 @@ class SosialPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Image.asset(
-              'assets/images/sosial.jpg', // Ganti dengan path gambar sosial yang sesuai
+              'assets/images/tawuran.jpg', // Ganti dengan path gambar sosial yang sesuai
               height: 200,
               fit: BoxFit.cover,
             ),
