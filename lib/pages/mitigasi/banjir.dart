@@ -15,8 +15,8 @@ class BanjirPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Image.network(
-              'https://example.com/banjir_image.jpg', 
+            Image.asset(
+              'assets/images/banjir.jpg', 
               height: 200,
               fit: BoxFit.cover,
             ),
