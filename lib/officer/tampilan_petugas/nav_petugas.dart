@@ -46,7 +46,7 @@ class NavPagesPetugas extends StatelessWidget {
       context,
       controller: PersistentTabController(initialIndex: 0),
       screens: _buildScreens(),
-      items: _navBarsItems(),
+      items: _navBarsItems(context),
       confineInSafeArea: true,
       backgroundColor: Colors.white,
       handleAndroidBackButtonPress: true,
@@ -83,7 +83,7 @@ class NavPagesPetugas extends StatelessWidget {
     ];
   }
 
-  List<PersistentBottomNavBarItem> _navBarsItems() {
+  List<PersistentBottomNavBarItem> _navBarsItems(BuildContext context) {
     return [
       PersistentBottomNavBarItem(
         icon: Icon(Icons.home),
@@ -133,117 +133,124 @@ class NavPagesPetugas extends StatelessWidget {
 class ReportReception extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("Laporan Diterima"),
-        ),
-        body: StreamBuilder(
-          stream: FirebaseFirestore.instance.collection('reports').snapshots(),
-          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Text("Error: ${snapshot.error}"),
-              );
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
-
-            return ListView.builder(
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (context, index) {
-                DocumentSnapshot document = snapshot.data!.docs[index];
-                Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-                String imageUrl = data['imageUrl'] ?? '';
-                String lokasiBencana = data['lokasiBencana'] ?? '';
-
-                return Card(
-                  elevation: 3,
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    title: Text("Jenis Bencana: ${data['jenisBencana']}"),
-                    subtitle: Text("Nama Bencana: ${data['namaBencana']}"),
-                    leading: imageUrl.isNotEmpty
-                        ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => CircularProgressIndicator(),
-                        errorWidget: (context, url, error) => Icon(Icons.error),
-                      ),
-                    )
-                        : Container(
-                      width: 60,
-                      height: 60,
-                      color: Colors.grey[300],
-                      child: Icon(Icons.image, color: Colors.grey[600]),
-                    ),
-                    onTap: () {
-                      _showReportDetails(context, data, document.id, imageUrl, lokasiBencana);
-                    },
-                  ),
-                );
-              },
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Laporan Diterima"),
+      ),
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection('reports').snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text("Error: ${snapshot.error}"),
             );
-          },
-        ),
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (context, index) {
+                    DocumentSnapshot document = snapshot.data!.docs[index];
+                    Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+                    String imageUrl = data['imageUrl'] ?? '';
+
+                    return Card(
+                      elevation: 3,
+                      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: ListTile(
+                        title: Text("Jenis Bencana: ${data['jenisBencana']}"),
+                        subtitle: Text("Nama Bencana: ${data['namaBencana']}"),
+                        leading: imageUrl.isNotEmpty
+                            ? Hero(
+                                tag: 'imageHero_$imageUrl',
+                                child: CachedNetworkImage(
+                                  imageUrl: imageUrl,
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) => Icon(Icons.error),
+                                ),
+                              )
+                            : Container(
+                                width: 60,
+                                height: 60,
+                                color: Colors.grey[300],
+                                child: Icon(Icons.image, color: Colors.grey[600]),
+                              ),
+                        onTap: () {
+                          _showReportDetails(context, data, document.id, imageUrl);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  void _showReportDetails(BuildContext context, Map<String, dynamic> data, String documentId, String imageUrl, String lokasiBencana) {
+  void _showReportDetails(BuildContext context, Map<String, dynamic> data, String documentId, String imageUrl) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text("Detail Laporan"),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Jenis Bencana: ${data['jenisBencana']}"),
-              Text("Nama Bencana: ${data['namaBencana']}"),
-              Text("Lokasi Bencana: $lokasiBencana"),
-              Text("Keterangan Bencana: ${data['keteranganBencana']}"),
-              SizedBox(height: 16),
-              imageUrl.isNotEmpty
-                  ? Hero(
-                tag: imageUrl, // Use a unique tag for Hero animation
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) {
-                    print("Error loading image: $error"); // Debugging print
-                    return Icon(Icons.error);
-                  },
-                ),
-              )
-                  : Container(),
-            ],
+          content: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Jenis Bencana: ${data['jenisBencana']}"),
+                Text("Nama Bencana: ${data['namaBencana']}"),
+                Text("Lokasi Bencana: ${data['lokasiBencana'] ?? ''}"),
+                Text("Keterangan Bencana: ${data['keteranganBencana'] ?? ''}"),
+                imageUrl.isNotEmpty
+                    ? Hero(
+                        tag: 'imageHero_$imageUrl',
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          placeholder: (context, url) => CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => Icon(Icons.error),
+                        ),
+                      )
+                    : Container(),
+              ],
+            ),
           ),
           actions: [
+            ElevatedButton(
+              onPressed: () {
+                _approveReport(documentId);
+                Navigator.pop(context);
+              },
+              child: Text("Approve"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _rejectReport(documentId);
+                Navigator.pop(context);
+              },
+              child: Text("Reject"),
+            ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
               child: Text("Tutup"),
-            ),
-            TextButton(
-              onPressed: () {
-                _deleteReport(documentId);
-                Navigator.pop(context);
-              },
-              child: Text("Hapus"),
             ),
           ],
         );
@@ -251,7 +258,11 @@ class ReportReception extends StatelessWidget {
     );
   }
 
-  void _deleteReport(String documentId) {
-    FirebaseFirestore.instance.collection('reports').doc(documentId).delete();
+  void _approveReport(String documentId) {
+    // Implement logic for approving a report
+  }
+
+  void _rejectReport(String documentId) {
+    // Implement logic for rejecting a report
   }
 }
