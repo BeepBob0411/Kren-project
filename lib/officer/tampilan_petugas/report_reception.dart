@@ -5,52 +5,54 @@ import 'package:cached_network_image/cached_network_image.dart';
 class ReportReception extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("Laporan Diterima"),
-        ),
-        body: StreamBuilder(
-          stream: FirebaseFirestore.instance.collection('reports').snapshots(),
-          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Text("Error: ${snapshot.error}"),
-              );
-            }
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Laporan Diterima"),
+      ),
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection('reports').snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text("Error: ${snapshot.error}"),
+            );
+          }
 
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
-            }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-            return ListView(
-              children: snapshot.data!.docs.map((DocumentSnapshot document) {
-                Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-                String imageUrl = data['imageUrl'] ?? '';
+          return ListView(
+            children: snapshot.data!.docs.map((DocumentSnapshot document) {
+              Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+              String imageUrl = data['imageUrl'] ?? '';
 
-                return ListTile(
+              return Card(
+                elevation: 3,
+                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: ListTile(
                   title: Text("Jenis Bencana: ${data['jenisBencana']}"),
                   subtitle: Text("Nama Bencana: ${data['namaBencana']}"),
                   leading: imageUrl.isNotEmpty
                       ? Hero(
-                    tag: 'imageHero_$imageUrl', // Tag harus unik
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
-                    ),
-                  )
+                          tag: 'imageHero_$imageUrl',
+                          child: CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            placeholder: (context, url) => CircularProgressIndicator(),
+                            errorWidget: (context, url, error) => Icon(Icons.error),
+                          ),
+                        )
                       : Container(width: 50, height: 50), // Placeholder if no image
                   onTap: () {
                     _showReportDetails(context, data, document.id, imageUrl);
                   },
-                );
-              }).toList(),
-            );
-          },
-        ),
+                ),
+              );
+            }).toList(),
+          );
+        },
       ),
     );
   }
@@ -72,30 +74,30 @@ class ReportReception extends StatelessWidget {
                 Text("Keterangan Bencana: ${data['keteranganBencana'] ?? ''}"),
                 imageUrl.isNotEmpty
                     ? Hero(
-                  tag: 'imageHero_$imageUrl', // Tag harus unik
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    placeholder: (context, url) => CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
-                  ),
-                )
+                        tag: 'imageHero_$imageUrl',
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          placeholder: (context, url) => CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => Icon(Icons.error),
+                        ),
+                      )
                     : Container(),
               ],
             ),
           ),
           actions: [
+            ElevatedButton(
+              onPressed: () {
+                _approveReport(documentId);
+                Navigator.pop(context);
+              },
+              child: Text("Approve"),
+            ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
               child: Text("Tutup"),
-            ),
-            TextButton(
-              onPressed: () {
-                _deleteReport(documentId);
-                Navigator.pop(context);
-              },
-              child: Text("Hapus"),
             ),
           ],
         );
@@ -103,7 +105,8 @@ class ReportReception extends StatelessWidget {
     );
   }
 
-  void _deleteReport(String documentId) {
-    FirebaseFirestore.instance.collection('reports').doc(documentId).delete();
+  void _approveReport(String documentId) {
+    // Implement logic for approving a report
+    print("Report approved: $documentId");
   }
 }
