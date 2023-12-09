@@ -160,7 +160,7 @@ class ReportReception extends StatelessWidget {
 
   void _openGoogleMaps(double? latitude, double? longitude) async {
     if (latitude != null && longitude != null) {
-      String url = "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude";
+      String url = "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude";
       if (await canLaunch(url)) {
         await launch(url);
       } else {
